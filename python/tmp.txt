@@ -1,0 +1,111 @@
+1. Executing Verilog-2005 frontend: top.v
+Parsing Verilog input from `top.v' to AST representation.
+Generating RTLIL representation for module `\top'.
+Dumping AST after simplification:
+    AST_MODULE <top.v:1.1-22.10> [0x5596eeaad5b0] str='\top' basic_prep
+      ATTR \dynports:
+        AST_CONSTANT <top.v:0.0-0.0> [0x5596eeab9930] bits='00000000000000000000000000000001'(32) signed basic_prep range=[31:0] int=1
+      AST_PARAMETER <top.v:2.11-2.12> [0x5596eeaadcd0] str='\n' basic_prep
+        AST_CONSTANT <top.v:2.13-2.15> [0x5596eeaae030] bits='00000000000000000000000000100000'(32) signed basic_prep range=[31:0] int=32
+      AST_WIRE <top.v:4.12-4.19> [0x5596eeaae2e0] str='\ALUCtrl' input basic_prep port=3 range=[2:0]
+        AST_RANGE <top.v:0.0-0.0> [0x5596eeaae420] basic_prep range=[2:0]
+          AST_CONSTANT <top.v:4.8-4.9> [0x5596eeaae560] bits='00000000000000000000000000000010'(32) signed basic_prep range=[31:0] int=2
+          AST_CONSTANT <top.v:4.10-4.11> [0x5596eeaae6a0] bits='00000000000000000000000000000000'(32) signed basic_prep range=[31:0]
+      AST_WIRE <top.v:5.14-5.17> [0x5596eeaaeae0] str='\OPA' input basic_prep port=1 range=[31:0]
+        AST_RANGE <top.v:0.0-0.0> [0x5596eeaaec20] basic_prep range=[31:0]
+          AST_CONSTANT <top.v:5.8-5.11> [0x5596eeaaed60] bits='00000000000000000000000000011111'(32) signed basic_prep range=[31:0] int=31
+          AST_CONSTANT <top.v:5.12-5.13> [0x5596eeaaf140] bits='00000000000000000000000000000000'(32) signed basic_prep range=[31:0]
+      AST_WIRE <top.v:5.18-5.21> [0x5596eeaaf300] str='\OPB' input basic_prep port=2 range=[31:0]
+        AST_RANGE <top.v:0.0-0.0> [0x5596eeaaf440] basic_prep range=[31:0]
+          AST_CONSTANT <top.v:5.8-5.11> [0x5596eeaaf580] bits='00000000000000000000000000011111'(32) signed basic_prep range=[31:0] int=31
+          AST_CONSTANT <top.v:5.12-5.13> [0x5596eeaaf990] bits='00000000000000000000000000000000'(32) signed basic_prep range=[31:0]
+      AST_WIRE <top.v:6.19-6.25> [0x5596eeaafb70] str='\Result' output reg basic_prep port=4 range=[31:0]
+        AST_RANGE <top.v:0.0-0.0> [0x5596eeaafcb0] basic_prep range=[31:0]
+          AST_CONSTANT <top.v:6.13-6.16> [0x5596eeaafdf0] bits='00000000000000000000000000011111'(32) signed basic_prep range=[31:0] int=31
+          AST_CONSTANT <top.v:6.17-6.18> [0x5596eeab01d0] bits='00000000000000000000000000000000'(32) signed basic_prep range=[31:0]
+      AST_WIRE <top.v:7.8-7.12> [0x5596eeaade10] str='\Zero' output basic_prep port=5 range=[0:0]
+      AST_ASSIGN <top.v:9.8-9.24> [0x5596eeaae9a0] basic_prep
+        AST_IDENTIFIER <top.v:9.8-9.12> [0x5596eeaae1a0 -> 0x5596eeaade10] str='\Zero' basic_prep
+        AST_EQ <top.v:9.14-9.23> [0x5596eeaae830] basic_prep
+          AST_IDENTIFIER <top.v:9.14-9.20> [0x5596eeaadb40 -> 0x5596eeaafb70] str='\Result' basic_prep
+          AST_CONSTANT <top.v:9.22-9.23> [0x5596eeaada00] bits='00000000000000000000000000000000'(32) signed basic_prep range=[31:0]
+      AST_ALWAYS <top.v:10.1-21.5> [0x5596eeac08f0] basic_prep
+        AST_EDGE <top.v:0.0-0.0> [0x5596eeac0b70] basic_prep
+          AST_IDENTIFIER <top.v:10.9-10.16> [0x5596eeac0a30 -> 0x5596eeaae2e0] str='\ALUCtrl' basic_prep
+        AST_EDGE <top.v:0.0-0.0> [0x5596eeac0df0] basic_prep
+          AST_IDENTIFIER <top.v:10.17-10.20> [0x5596eeac0cb0 -> 0x5596eeaaeae0] str='\OPA' basic_prep
+        AST_EDGE <top.v:0.0-0.0> [0x5596eeac1070] basic_prep
+          AST_IDENTIFIER <top.v:10.21-10.24> [0x5596eeac0f30 -> 0x5596eeaaf300] str='\OPB' basic_prep
+        AST_BLOCK <top.v:10.25-21.5> [0x5596eeac11b0] basic_prep
+          AST_BLOCK <top.v:10.25-21.5> [0x5596eeac12f0] basic_prep
+            AST_CASE <top.v:11.4-20.10> [0x5596eeac1570] basic_prep
+              AST_IDENTIFIER <top.v:11.9-11.16> [0x5596eeac1430 -> 0x5596eeaae2e0] str='\ALUCtrl' basic_prep
+              AST_COND <top.v:0.0-0.0> [0x5596eeac16b0] basic_prep
+                AST_CONSTANT <top.v:12.4-12.5> [0x5596eeac17f0] bits='00000000000000000000000000000000'(32) signed basic_prep range=[31:0]
+                AST_BLOCK <top.v:12.6-12.23> [0x5596eeac1930] basic_prep
+                  AST_ASSIGN_EQ <top.v:12.6-12.22> [0x5596eeac1f70] basic_prep
+                    AST_IDENTIFIER <top.v:12.6-12.12> [0x5596eeac1a70 -> 0x5596eeaafb70] str='\Result' basic_prep
+                    AST_ADD <top.v:12.13-12.22> [0x5596eeac1e30] basic_prep
+                      AST_IDENTIFIER <top.v:12.13-12.16> [0x5596eeac1bb0 -> 0x5596eeaaeae0] str='\OPA' basic_prep
+                      AST_IDENTIFIER <top.v:12.19-12.22> [0x5596eeac1cf0 -> 0x5596eeaaf300] str='\OPB' basic_prep
+              AST_COND <top.v:0.0-0.0> [0x5596eeac20b0] basic_prep
+                AST_CONSTANT <top.v:13.4-13.5> [0x5596eeac2240] bits='00000000000000000000000000000001'(32) signed basic_prep range=[31:0] int=1
+                AST_BLOCK <top.v:13.6-13.23> [0x5596eeac23b0] basic_prep
+                  AST_ASSIGN_EQ <top.v:13.6-13.22> [0x5596eeac2a10] basic_prep
+                    AST_IDENTIFIER <top.v:13.6-13.12> [0x5596eeac24f0 -> 0x5596eeaafb70] str='\Result' basic_prep
+                    AST_SUB <top.v:13.13-13.22> [0x5596eeac28b0] basic_prep
+                      AST_IDENTIFIER <top.v:13.13-13.16> [0x5596eeac2630 -> 0x5596eeaaeae0] str='\OPA' basic_prep
+                      AST_IDENTIFIER <top.v:13.19-13.22> [0x5596eeac2770 -> 0x5596eeaaf300] str='\OPB' basic_prep
+              AST_COND <top.v:0.0-0.0> [0x5596eeac2b70] basic_prep
+                AST_CONSTANT <top.v:14.4-14.5> [0x5596eeac2d10] bits='00000000000000000000000000000010'(32) signed basic_prep range=[31:0] int=2
+                AST_BLOCK <top.v:14.6-14.23> [0x5596eeac2e80] basic_prep
+                  AST_ASSIGN_EQ <top.v:14.6-14.22> [0x5596eeac34c0] basic_prep
+                    AST_IDENTIFIER <top.v:14.6-14.12> [0x5596eeac2fc0 -> 0x5596eeaafb70] str='\Result' basic_prep
+                    AST_BIT_OR <top.v:14.13-14.22> [0x5596eeac3380] basic_prep
+                      AST_IDENTIFIER <top.v:14.13-14.16> [0x5596eeac3100 -> 0x5596eeaaeae0] str='\OPA' basic_prep
+                      AST_IDENTIFIER <top.v:14.19-14.22> [0x5596eeac3240 -> 0x5596eeaaf300] str='\OPB' basic_prep
+              AST_COND <top.v:0.0-0.0> [0x5596eeac3620] basic_prep
+                AST_CONSTANT <top.v:15.4-15.5> [0x5596eeac37c0] bits='00000000000000000000000000000011'(32) signed basic_prep range=[31:0] int=3
+                AST_BLOCK <top.v:15.6-15.23> [0x5596eeac3900] basic_prep
+                  AST_ASSIGN_EQ <top.v:15.6-15.22> [0x5596eeac3f40] basic_prep
+                    AST_IDENTIFIER <top.v:15.6-15.12> [0x5596eeac3a40 -> 0x5596eeaafb70] str='\Result' basic_prep
+                    AST_BIT_AND <top.v:15.13-15.22> [0x5596eeac3e00] basic_prep
+                      AST_IDENTIFIER <top.v:15.13-15.16> [0x5596eeac3b80 -> 0x5596eeaaeae0] str='\OPA' basic_prep
+                      AST_IDENTIFIER <top.v:15.19-15.22> [0x5596eeac3cc0 -> 0x5596eeaaf300] str='\OPB' basic_prep
+              AST_COND <top.v:0.0-0.0> [0x5596eeac40a0] basic_prep
+                AST_CONSTANT <top.v:16.4-16.5> [0x5596eeac4240] bits='00000000000000000000000000000100'(32) signed basic_prep range=[31:0] int=4
+                AST_BLOCK <top.v:16.6-16.21> [0x5596eeac43b0] basic_prep
+                  AST_ASSIGN_EQ <top.v:16.6-16.20> [0x5596eeac49f0] basic_prep
+                    AST_IDENTIFIER <top.v:16.6-16.12> [0x5596eeac44f0 -> 0x5596eeaafb70] str='\Result' basic_prep
+                    AST_BIT_XOR <top.v:16.13-16.20> [0x5596eeac48b0] basic_prep
+                      AST_IDENTIFIER <top.v:16.13-16.16> [0x5596eeac4630 -> 0x5596eeaaeae0] str='\OPA' basic_prep
+                      AST_IDENTIFIER <top.v:16.17-16.20> [0x5596eeac4770 -> 0x5596eeaaf300] str='\OPB' basic_prep
+              AST_COND <top.v:0.0-0.0> [0x5596eeac4b50] basic_prep
+                AST_CONSTANT <top.v:17.4-17.5> [0x5596eeac4cf0] bits='00000000000000000000000000000101'(32) signed basic_prep range=[31:0] int=5
+                AST_BLOCK <top.v:17.6-17.22> [0x5596eeac4e60] basic_prep
+                  AST_ASSIGN_EQ <top.v:17.6-17.21> [0x5596eeac5600] basic_prep
+                    AST_IDENTIFIER <top.v:17.6-17.12> [0x5596eeac4fa0 -> 0x5596eeaafb70] str='\Result' basic_prep
+                    AST_SHIFT_LEFT <top.v:17.13-17.21> [0x5596eeac54a0] basic_prep
+                      AST_IDENTIFIER <top.v:17.13-17.16> [0x5596eeac50e0 -> 0x5596eeaaeae0] str='\OPA' basic_prep
+                      AST_TO_UNSIGNED <top.v:0.0-0.0> [0x5596eeac5360] basic_prep
+                        AST_IDENTIFIER <top.v:17.18-17.21> [0x5596eeac5220 -> 0x5596eeaaf300] str='\OPB' basic_prep
+              AST_COND <top.v:0.0-0.0> [0x5596eeac5760] basic_prep
+                AST_CONSTANT <top.v:18.4-18.5> [0x5596eeac5900] bits='00000000000000000000000000000110'(32) signed basic_prep range=[31:0] int=6
+                AST_BLOCK <top.v:18.6-18.22> [0x5596eeac5a70] basic_prep
+                  AST_ASSIGN_EQ <top.v:18.6-18.21> [0x5596eeac6210] basic_prep
+                    AST_IDENTIFIER <top.v:18.6-18.12> [0x5596eeac5bb0 -> 0x5596eeaafb70] str='\Result' basic_prep
+                    AST_SHIFT_RIGHT <top.v:18.13-18.21> [0x5596eeac60b0] basic_prep
+                      AST_IDENTIFIER <top.v:18.13-18.16> [0x5596eeac5cf0 -> 0x5596eeaaeae0] str='\OPA' basic_prep
+                      AST_TO_UNSIGNED <top.v:0.0-0.0> [0x5596eeac5f70] basic_prep
+                        AST_IDENTIFIER <top.v:18.18-18.21> [0x5596eeac5e30 -> 0x5596eeaaf300] str='\OPB' basic_prep
+              AST_COND <top.v:0.0-0.0> [0x5596eeac6370] basic_prep
+                AST_DEFAULT <top.v:19.4-19.11> [0x5596eeac64b0] basic_prep
+                AST_BLOCK <top.v:19.12-19.21> [0x5596eeac6610] basic_prep
+                  AST_ASSIGN_EQ <top.v:19.12-19.20> [0x5596eeac6a40] basic_prep
+                    AST_IDENTIFIER <top.v:19.12-19.18> [0x5596eeac6770 -> 0x5596eeaafb70] str='\Result' basic_prep
+                    AST_CONSTANT <top.v:19.19-19.20> [0x5596eeac68d0] bits='00000000000000000000000000000000'(32) signed basic_prep range=[31:0]
+--- END OF AST DUMP ---
+Note: Assuming pure combinatorial block at top.v:10.1-21.5 in
+compliance with IEC 62142(E):2005 / IEEE Std. 1364.1(E):2002. Recommending
+use of @* instead of @(...) for better match of synthesis and simulation.
+Successfully finished Verilog frontend.

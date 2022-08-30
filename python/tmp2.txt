@@ -1,0 +1,111 @@
+1. Executing Verilog-2005 frontend: top.v
+Parsing Verilog input from `top.v' to AST representation.
+Generating RTLIL representation for module `\top'.
+Dumping AST after simplification:
+    AST_MODULE   str='\top' basic_prep
+      ATTR \dynports:
+        AST_CONSTANT   int=1
+      AST_PARAMETER   str='\n' basic_prep
+        AST_CONSTANT   int=32
+      AST_WIRE  
+        AST_RANGE  
+          AST_CONSTANT   int=2
+          AST_CONSTANT  
+      AST_WIRE  
+        AST_RANGE  
+          AST_CONSTANT   int=31
+          AST_CONSTANT  
+      AST_WIRE  
+        AST_RANGE  
+          AST_CONSTANT   int=31
+          AST_CONSTANT  
+      AST_WIRE  
+        AST_RANGE  
+          AST_CONSTANT   int=31
+          AST_CONSTANT  
+      AST_WIRE  
+      AST_ASSIGN   basic_prep
+        AST_IDENTIFIER   str='\Zero' basic_prep
+        AST_EQ   basic_prep
+          AST_IDENTIFIER   str='\Result' basic_prep
+          AST_CONSTANT  
+      AST_ALWAYS   basic_prep
+        AST_EDGE   basic_prep
+          AST_IDENTIFIER   str='\ALUCtrl' basic_prep
+        AST_EDGE   basic_prep
+          AST_IDENTIFIER   str='\OPA' basic_prep
+        AST_EDGE   basic_prep
+          AST_IDENTIFIER   str='\OPB' basic_prep
+        AST_BLOCK   basic_prep
+          AST_BLOCK   basic_prep
+            AST_CASE   basic_prep
+              AST_IDENTIFIER   str='\ALUCtrl' basic_prep
+              AST_COND   basic_prep
+                AST_CONSTANT  
+                AST_BLOCK   basic_prep
+                  AST_ASSIGN_EQ   basic_prep
+                    AST_IDENTIFIER   str='\Result' basic_prep
+                    AST_ADD   basic_prep
+                      AST_IDENTIFIER   str='\OPA' basic_prep
+                      AST_IDENTIFIER   str='\OPB' basic_prep
+              AST_COND   basic_prep
+                AST_CONSTANT   int=1
+                AST_BLOCK   basic_prep
+                  AST_ASSIGN_EQ   basic_prep
+                    AST_IDENTIFIER   str='\Result' basic_prep
+                    AST_SUB   basic_prep
+                      AST_IDENTIFIER   str='\OPA' basic_prep
+                      AST_IDENTIFIER   str='\OPB' basic_prep
+              AST_COND   basic_prep
+                AST_CONSTANT   int=2
+                AST_BLOCK   basic_prep
+                  AST_ASSIGN_EQ   basic_prep
+                    AST_IDENTIFIER   str='\Result' basic_prep
+                    AST_BIT_OR   basic_prep
+                      AST_IDENTIFIER   str='\OPA' basic_prep
+                      AST_IDENTIFIER   str='\OPB' basic_prep
+              AST_COND   basic_prep
+                AST_CONSTANT   int=3
+                AST_BLOCK   basic_prep
+                  AST_ASSIGN_EQ   basic_prep
+                    AST_IDENTIFIER   str='\Result' basic_prep
+                    AST_BIT_AND   basic_prep
+                      AST_IDENTIFIER   str='\OPA' basic_prep
+                      AST_IDENTIFIER   str='\OPB' basic_prep
+              AST_COND   basic_prep
+                AST_CONSTANT   int=4
+                AST_BLOCK   basic_prep
+                  AST_ASSIGN_EQ   basic_prep
+                    AST_IDENTIFIER   str='\Result' basic_prep
+                    AST_BIT_XOR   basic_prep
+                      AST_IDENTIFIER   str='\OPA' basic_prep
+                      AST_IDENTIFIER   str='\OPB' basic_prep
+              AST_COND   basic_prep
+                AST_CONSTANT   int=5
+                AST_BLOCK   basic_prep
+                  AST_ASSIGN_EQ   basic_prep
+                    AST_IDENTIFIER   str='\Result' basic_prep
+                    AST_SHIFT_LEFT   basic_prep
+                      AST_IDENTIFIER   str='\OPA' basic_prep
+                      AST_TO_UNSIGNED   basic_prep
+                        AST_IDENTIFIER   str='\OPB' basic_prep
+              AST_COND   basic_prep
+                AST_CONSTANT   int=6
+                AST_BLOCK   basic_prep
+                  AST_ASSIGN_EQ   basic_prep
+                    AST_IDENTIFIER   str='\Result' basic_prep
+                    AST_SHIFT_RIGHT   basic_prep
+                      AST_IDENTIFIER   str='\OPA' basic_prep
+                      AST_TO_UNSIGNED   basic_prep
+                        AST_IDENTIFIER   str='\OPB' basic_prep
+              AST_COND   basic_prep
+                AST_DEFAULT   basic_prep
+                AST_BLOCK   basic_prep
+                  AST_ASSIGN_EQ   basic_prep
+                    AST_IDENTIFIER   str='\Result' basic_prep
+                    AST_CONSTANT  
+--- END OF AST DUMP ---
+Note: Assuming pure combinatorial block at top.v:10.1-21.5 in
+compliance with IEC 62142(E):2005 / IEEE Std. 1364.1(E):2002. Recommending
+use of @* instead of @(...) for better match of synthesis and simulation.
+Successfully finished Verilog frontend.
