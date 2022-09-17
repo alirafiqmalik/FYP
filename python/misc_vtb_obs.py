@@ -6,7 +6,7 @@ import re
 gates=['BUFF','BUF','NOT_g', 'AND_g', 'OR_g', 'NAND_g', 'NOR_g','XOR_g','XNOR_g']
 flipflops=['DFFcell', 'DFFSRcell']
 
-netlist=open('/home/alira/FYP/linux/final.v').read()
+netlist=open('/home/alira/FYP/tmprtl.v').read()
 # /home/alira/FYP/linux/final.v
 # /home/alira/FYP/output.v
 
@@ -20,7 +20,7 @@ netlist=re.sub("wire .*;\n","",netlist)
 
 # for i in re.findall("assign (.*) = .*;",netlist):
 #     print(i)
-netlist=re.sub("assign .* = .*;","",netlist)
+# netlist=re.sub("assign .* = .*;","",netlist)
 # print(re.findall("assign .* = .*;",netlist))
 
 
@@ -37,8 +37,8 @@ netlist=re.sub("endmodule","endmodule\n",netlist)
 #print(re.findall("assign (.*) = .*;",netlist))
 
 
-with open('/home/alira/FYP/output.v', 'w') as f:
-    f.write(netlist)
+# with open('/home/alira/FYP/output.v', 'w') as f:
+#     f.write(netlist)
 
 
 
@@ -112,7 +112,7 @@ netlist=re.sub(";","\n",netlist)
 
 
 
-with open('/home/alira/FYP/netlist.bench', 'w') as f:
+with open('/home/alira/FYP/tmp/hb.py', 'w') as f:
     f.write(netlist)
 
 
