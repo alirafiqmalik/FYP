@@ -15,6 +15,7 @@ python3 /home/alira/FYP/sat_attack/run.py /home/alira/FYP/tmp/tmprtl.v /home/ali
 
 
 # PUSING DIR after PULL
+* Dont Run
 ```
 git add .
 git commit -m "version 0.1.2" 
