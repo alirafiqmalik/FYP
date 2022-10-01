@@ -1,4 +1,3 @@
-#RESTORE DFF VALUES
 bitmask_0 = DFF(n1008)
 count_0 = DFF(n1005)
 count_1 = DFF(n1006)

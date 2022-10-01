@@ -34,6 +34,9 @@ class DipFinder:
         """
         constraint_ckt0 = Circuit.specify_inputs(dip, self.nodes, self.output_names, key_suffix = "__ckt0")
         constraint_ckt1 = Circuit.specify_inputs(dip, self.nodes, self.output_names, key_suffix = "__ckt1")
+        # print('C1_DATA3_0FQ' in constraint_ckt0.outputs())
+        # print('C1_DATA3_0FQ' in constraint_ckt1.outputs())
+        # print(constraint_ckt0.outputs()['C1_DATA3_0FQ'],outputs['C1_DATA3_0FQ'])
 
         output_constraints0 = []
         output_constraints1 = []

@@ -6,7 +6,7 @@ import random
 #gates=['NOT', 'AND', 'OR', 'NAND', 'NOR']
 v_gates_ps="_g"
 verilog_gates=['BUF','NOT_g', 'AND_g', 'OR_g', 'NAND_g', 'NOR_g','XOR_g','XNOR_g']
-bench_gates=['BUF','NOT', 'AND', 'OR', 'NAND', 'NOR','XOR','XNOR']
+bench_gates=['DFF','BUF','NOT', 'AND', 'OR', 'NAND', 'NOR','XOR','XNOR']
 
 
 ####################################################################################################################################
@@ -180,18 +180,16 @@ def extract_gates_b(bench):
     tmp={i:[] for i in bench_gates}
     gate_count = {i: 0 for i in tmp}
     for i in bench_gates:
-        if i=='NOT' or i=='BUF':
+        if i=='NOT' or i=='BUF' or i=='DFF':
             tmp[i]=re.findall(" ?(.*) = "+ i +"\((.*)\)\n?",bench)
         else:
-            tmp[i]=re.findall(" ?(.*) = "+ i +"\((.*),(.*)\)\n?",bench)
+            tmp[i]=re.findall(" ?(.*) = "+ i +"\((.*), ?(.*)\)\n?",bench)
         
         gcount = len(tmp[i])
         if (gcount == 0):
             tmp.pop(i, None)
         else:
             gate_count[i] = gcount
-            
-
     return tmp,gate_count
 
 ####################################################################################################################################

@@ -43,7 +43,9 @@ class CircuitBuilder():
         key_suffix: the suffix to apply to key names
         """
         # print("TESTING = \n",nodes.keys(),"\n\n",name)
+        # print(name in nodes.keys())
         node = nodes[name]
+
 
         if name in self.visited_nodes:
             return node.z3_repr
@@ -53,6 +55,7 @@ class CircuitBuilder():
         if node.type == "Key Input":
             self._build_key(node, name, key_suffix)
         elif node.type == "Primary Input":
+            # print(name,"+++")
             self._build_input(node, name)
         else:
             fanin = [self._build_node(nodes, child_name, key_suffix) for child_name in node.inputs]
@@ -82,8 +85,8 @@ class CircuitBuilder():
         elif node.type == "Nor":
             node.z3_repr = Not(Or(*fanin))
         elif node.type == "Buf":
-            # print(fanin[0])
             node.z3_repr = fanin[0]
+        # elif 
         else:
             print("Unknown node type " + str(node))
             raise
@@ -111,6 +114,7 @@ class CircuitBuilder():
         node: the node to find the z3 representation for
         name: the name of the key
         """
+        # print(name,"---")
         if self.specified_inputs is not None and name in self.specified_inputs:
             node.z3_repr = self.specified_inputs[name]
         else:

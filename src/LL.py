@@ -1,8 +1,7 @@
-from netlist import *
+from src.netlist import *
 import subprocess
-from utils import sortio, randKey, gencc, hammingcc, io_port
-from cmds import *
-from utils import format_verilog
+from src.utils import sortio, randKey, gencc, hammingcc,format_verilog, io_port
+from src.cmds import *
 
 ####################################################################################################################################
 ####################################################################################################################################
@@ -105,12 +104,37 @@ class LogicLocking(Netlist):
             print("ERROR")
             print("Number of Gates < Number of Key-Bits")
             return None
-        else:
-            print("n == Bits")
+        # else:
+        print("n == Bits")
 
-            print("######################################", end="\n          ")
-            print(key, " ----------> ", bitkey)
-            print("######################################")
+        print("######################################", end="\n          ")
+        print(key, " ----------> ", bitkey)
+        print("######################################")
+
+        random.seed(10)
+        for i in range(n):
+            tp = random.randint(0, len(self.wires)-1)
+            inp = list(self.circuitgraph.predecessors(self.wires[tp]))
+            if (bitkey[-(i+1)] == '1'):
+                self.InsertKeyGate(inp[0], self.wires[tp], 'XNOR')
+            else:
+                self.InsertKeyGate(inp[0], self.wires[tp], 'XOR')
+        
+    def SLL(self, n: int, key: int) -> list:
+        bitkey = format(key, "b")
+        print(2**n, "<----->", key, "<----->", (2**n) >= key)
+        if (n > len(bitkey)):
+            bitkey = format(key, "0"+str(n)+"b")
+        elif (n < len(bitkey)):
+            print("ERROR")
+            print("Number of Gates < Number of Key-Bits")
+            return None
+        # else:
+        print("n == Bits")
+
+        print("######################################", end="\n          ")
+        print(key, " ----------> ", bitkey)
+        print("######################################")
 
         random.seed(10)
         for i in range(n):
@@ -179,6 +203,8 @@ class LogicLocking(Netlist):
 
         subprocess.run(cmd2.format("./tmp/output_graph.bench",
                        "./tmp/btv_output_graph.v"), shell=True)
+
+        
         # subprocess.run(
         #     "python3 /home/alira/FYP/python/cleanoutputverilog.py /home/alira/FYP/btv_output_graph.v \/home/alira/FYP/output", shell=True)
 
@@ -186,10 +212,11 @@ class LogicLocking(Netlist):
 
         # netlist=re.sub(sys.argv[2],r"top",netlist)
         netlist = open("./tmp/btv_output_graph.v").read()
+        netlist = format_verilog(netlist)
+        print( "HERE",re.findall("module .* ?\((.*)\) ?;", netlist))
         netlist = re.sub("module .* ?\((.*)\) ?;",
                          r"module top (\1) ;", netlist)
-        netlist = format_verilog(netlist)
-
+        
         with open("./tmp/btv_output_graph.v", 'w') as f:
             f.write(netlist)
 
@@ -203,7 +230,7 @@ class LogicLocking(Netlist):
             tmpx += "assign FSI_"+str(i)+"=FSO;\n"
             tmpx += "assign FRI_"+str(i)+"=FRO;\n"
 
-            netlist = re.sub("input.*"+tmpss+".*;", "", netlist)
+            netlist = re.sub("input .*"+tmpss+".*;", "", netlist)
             netlist = re.sub(tmpss+" ?,", "", netlist)
 
             netlist = re.sub("input.*"+tmpsr+".*;", "", netlist)
@@ -224,11 +251,12 @@ class LogicLocking(Netlist):
         with open("./tmp/tmp_input.v", 'w') as f:
             f.write(netlist)
 
-        subprocess.run(cmd1.format("./tmp/tmp_input.v", "./tmp/tmpoutput.v",
-                       outputpath, getcpp="", gettmpv=""), shell=True)
+        subprocess.run(cmd1.format(inputfile="./tmp/tmp_input.v",rtlv= "./tmp/tmpoutput.v",
+                       outputfile=outputpath,cppfile="", getcpp="", gettmpv=""), shell=True)
         # print("###################################################\nDONE")
-        subprocess.run(
-            "python3 /home/alira/FYP/python/misc_vtb_obs.py", shell=True)
+        
+        # subprocess.run(
+        #     "python3 /home/alira/FYP/python/misc_vtb_obs.py", shell=True)
 
         # subprocess.run("python3 /home/alira/FYP/python/cleanoutputverilog.py "+outputpath,shell=True)
 

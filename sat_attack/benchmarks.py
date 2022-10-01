@@ -1,8 +1,6 @@
 import circuit
-import tokenizer
-import parser
 from src.utils import getio_v,extract_gates_v,extract_io_b,extract_gates_b
-from node import Node
+from node import Node,DFF
 
 
 
@@ -29,6 +27,8 @@ def read_nodes_v(filename):
   return node,out
 
 
+
+
 def read_nodes_b(filename):
   netlist=open(filename).read()  
   inp= extract_io_b(netlist,mode='input')
@@ -37,16 +37,28 @@ def read_nodes_b(filename):
 
 
   node={}
+
   for i in inp:
     # print(i,[],"Primary Input","Key Input")
     if('key' in i):
       node[i]=Node(i,[],"Key Input")
+    # elif (('clk' in i.lower()) |('clock' in i.lower())):
+    #   node["clk"]=Node(i,[],"Key Input")
+    # elif (('rst' in i.lower()) |('reset' in i.lower())):
+    #   node["rst"]=Node(i,[],"Key Input")
     else:
       node[i]=Node(i,[],"Primary Input")
 
   for i in gates:
     for j in gates[i]:
       # print(i.title(),j[-1],list(j[:-1]))
+      # if(i=="DFF"):
+      #   break
+      #   if("clk" not in node):
+      #     print(i,"######################################## DFF ERROR NO CLK #####################################")
+      #   if("rst" not in node):
+      #     print(i,"######################################## DFF ERROR NO RST #####################################")
+      # else:
       node[j[0]]=Node(j[0],list(j[1:]),i.title())
   # print(out)
   return node,out

@@ -1,70 +1,122 @@
-from src.utils import *
-import re
-
-
-# bench=open("/home/alira/FYP/python/tmpcir.bench").read()
-# circuit=LogicLocking(bench)
-
-# key=randKey(10, seed=10)
-# print(key)
-# circuit.RLL(n=10, key=key[0])
-
-# circuit.graph_to_bench("/home/alira/FYP/tmp/tmp.bench")
+import src.LL as L
+import src.utils as u
+import src.conv as c
+from src.cmds import *
+import subprocess
 
 
 
-# tmp=extract_gates_b(bench)
-
-# print(tmp[0].keys())
-# print(tmp[1])
 
 
+b=open("/home/alira/FYP/linux/MSATLL/benchmarks/original/apex4.bench").read()
+tmp=L.LogicLocking(b)
+tmp.SLL(10,75)
+# tmp.SFLLHD(outputpath="/home/alira/FYP/tmp/tmpsll.bench", HD=0, key=734)
+tmp.graph_to_bench("/home/alira/FYP/tmp/tmp_sll.bench")
 
-# bench=open("/home/alira/FYP/tmp/tmp.bench").read()
-# verilog,r=bench_to_verilog(bench)
-# print(r)
+bl=open("/home/alira/FYP/tmp/tmp_sll.bench").read()
 
-# with open("/home/alira/FYP/tmp/obf.v","w") as f:
-#     f.write(verilog)
+to,_=c.bench_to_verilog(b)
+with open("/home/alira/FYP/tmp/tmp_org.v",'w') as f:
+  f.write(to)
 
-
-
-# bench=open("/home/alira/FYP/tmp/tmp.bench").read()
-# verilog,r=bench_to_verilog(bench)
-# print(r)
-
-# with open("/home/alira/FYP/tmp/tmpobf.v","w") as f:
-#     f.write(verilog)
-
-
-# bench=open("/home/alira/FYP/oracle/oracle.bench").read()
-# verilog,r=bench_to_verilog(bench)
-# print(r)
-
-# with open("/home/alira/FYP/tmp/tmpobf.v","a") as f:
-#     f.write("\n\n\n\n#oracle\n"+verilog)
+t1,_=c.bench_to_verilog(bl)
+with open("/home/alira/FYP/tmp/tmp_sll.v",'w') as f:
+  f.write(t1)
 
 
-# "/home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/oracle1.bench"
-bench=open("/home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/design1.bench").read()
-
-def extract_combo_b(bench):
-  tmpd=re.findall("(.*) = DFF\((.*)\)",bench)
-  txt="#RESTORE DFF VALUES\n"
-  for i in tmpd:
-    tmpi="{} = DFF({})".format(i[0],i[1])
-    txt+=tmpi+"\n"
-
-tmp=re.sub("(.*) = DFF\((.*)\)\n",r"INPUT(\1)\nOUTPUT(\2)\n",bench)
 
 
-with open("/home/alira/FYP/tmp/combo.bench","w") as f:
-    f.write(tmp)
+
+# subprocess.run(cmd2.format("/home/alira/FYP/tmp/tmp_sll.bench",
+#                        "/home/alira/FYP/tmp/tmp_sll.v"), shell=True)
+
+# subprocess.run(cmd2.format("/home/alira/FYP/linux/MSATLL/benchmarks/original/apex4.bench",
+#                        "/home/alira/FYP/tmp/tmp_org.v"), shell=True)
 
 
-with open("/home/alira/FYP/tmp/seq.bench","w") as f:
-    f.write(txt)
 
 
-# python3 /home/alira/FYP/sat_attack/run.py /home/alira/FYP/tmp/tmprtl.v /home/alira/FYP/tmp/ortl.v
-# python3 /home/alira/FYP/sat_attack/run.py /home/alira/FYP/tmp/combo2.bench /home/alira/FYP/tmp/combo.bench
+
+
+
+
+
+
+
+
+
+
+
+# verilog=open("/home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/tmpout.v").read()
+
+# inputs=u.getio_v(verilog,"input")
+# outputs=u.getio_v(verilog,"output")
+# gates,_=u.extract_gates_v(verilog)
+
+
+# bench=open("/home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/oracle1.bench").read()
+# tmp,_=c.bench_to_verilog(bench)
+
+# # print(tmp)
+# with open("./tmp/tmpbench_to_v_oracle1.v",'w') as f:
+#   f.write(tmp)
+
+
+
+# bench=open("/home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/design1.bench").read()
+# tmp,_=c.bench_to_verilog(bench)
+# with open("./tmp/tmpbench_to_v_design1.v",'w') as f:
+#   f.write(tmp)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# python3 /home/alira/FYP/sat_attack/run.py /home/alira/FYP/tmp.bench /home/alira/FYP/tmp2.bench b
+# python3 /home/alira/FYP/sat_attack/run.py /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/design1.bench /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/oracle1.bench b
+
+
+# ./sld /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/design1.bench /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/oracle1.bench
+
+# /home/alira/FYP/linux/yosys/build/yosys -p '
+# read_verilog /home/alira/FYP/linux/CSAW/modulefiles.v /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/design1_netlist.v
+# hierarchy -check -top fsm_0_obf
+# flatten
+# proc; opt; fsm; opt; memory; opt
+# techmap; opt
+# dfflibmap -liberty /home/alira/FYP/vlib/mycells.lib
+# abc -liberty /home/alira/FYP/vlib/mycells.lib
+# write_verilog -noattr tmpout.v
+# '

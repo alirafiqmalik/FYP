@@ -1,4 +1,3 @@
-#RESTORE DFF VALUES
 count_0 = DFF(n541)
 count_1 = DFF(n542)
 curr_state_0 = DFF(n602)

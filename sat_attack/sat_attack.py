@@ -51,6 +51,7 @@ class SatAttack:
             self.iterations += 1
 
         key = self._find_key(oracle_io_pairs, key_inputs)
+        # print(key)
         # expected_key = benchmarks.get_expected_key(self.locked_filename)
 
         # print("\nExpected key: %s" % (self._key_string(expected_key)))
@@ -85,6 +86,7 @@ class SatAttack:
             s.add(*output_constraints)
 
         s.check()
+        # print()
         model = s.model()
         key = sat_model.extract_from_model(model, key_names, completion=True)
         return key
@@ -111,15 +113,15 @@ class SatAttack:
     def _key_string(self, key):
         def x(name):
             tmp=re.findall("[\d]+",name)
-            print(tmp)
+            # print("TMP",tmp)
             if (tmp!=[]):
-                return tmp[0]
+                return int(tmp[0])
                 # return tmp
             else:
                 return 0
         ordered_names = sorted(key.keys(), key=x,reverse=True)
         # print(key.keys())
-        print(ordered_names)
+        print("HERE ",ordered_names)
         
         key_string = ""
 

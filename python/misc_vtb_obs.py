@@ -6,7 +6,7 @@ import re
 gates=['BUFF','BUF','NOT_g', 'AND_g', 'OR_g', 'NAND_g', 'NOR_g','XOR_g','XNOR_g']
 flipflops=['DFFcell', 'DFFSRcell']
 
-netlist=open('/home/alira/FYP/tmprtl.v').read()
+netlist=open('/home/alira/FYP/tmp/tmpsll.bench').read()
 # /home/alira/FYP/linux/final.v
 # /home/alira/FYP/output.v
 

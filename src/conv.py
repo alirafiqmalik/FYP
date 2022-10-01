@@ -1,4 +1,4 @@
-from utils import format_verilog,io_port,extract_gates_b,extract_io_b,extract_gates_v,extract_io_v
+from src.utils import format_verilog,io_port,extract_gates_b,extract_io_b,extract_gates_v,getio_v
 
 
 def bench_to_verilog(bench):
@@ -13,6 +13,26 @@ def bench_to_verilog(bench):
     verilog = "module top ({},{});{}".format(
         porti, porto, input_dec+output_dec)
 
+    clock=""
+    if("DFF" in gate_list):
+        
+        
+        for k in inputs:
+            if(("clk" in k.lower()) or ("clock" in k.lower())):
+                clock=k
+        if(clock==""):
+            print("################### ERROR ###################")
+        
+        for i in gates["DFF"]:
+            verilog += "reg "+i[0]+" ;"
+
+        verilog+="always@(posedge {})begin ".format(clock)
+        for i in gates["DFF"]:
+            verilog += i[0]+" = "+i[1]+" ;"
+        verilog+=" end "
+        
+
+    
     for i in gate_list:
         tmp = gates[i]
         if i == 'NOT':
@@ -50,8 +70,8 @@ def bench_to_verilog(bench):
 def verilog_to_bench(verilog):
     verilog = format_verilog(verilog)
     gates = extract_gates_v(verilog)
-    inputs = extract_io_v(verilog, mode="input")
-    outputs = extract_io_v(verilog, mode="output")
+    inputs = getio_v(verilog, mode="input")
+    outputs = getio_v(verilog, mode="output")
     
     
     bench=""
