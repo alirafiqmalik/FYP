@@ -17,16 +17,30 @@ abc_path="/home/alira/FYP/linux/yosys/build/yosys-abc"
 # write_verilog -noattr tmprtl.v
 # '
 
+# /home/alira/FYP/tmp2.v
+# /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/design1_netlist.v
 
 # /home/alira/FYP/linux/yosys/build/yosys -p '
-# read_verilog /home/alira/FYP/linux/CSAW/modulefiles.v /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/design1_netlist.v
-# hierarchy -check -top fsm_0_obf
+# read_verilog /home/alira/FYP/linux/CSAW/modulefiles.v /home/alira/FYP/tmp2.v
+# hierarchy -check -top pancham
 # flatten
 # proc; opt; fsm; opt; memory; opt
 # techmap; opt
 # dfflibmap -liberty /home/alira/FYP/vlib/mycells.lib
 # abc -liberty /home/alira/FYP/vlib/mycells.lib
-# write_verilog -noattr /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/tmpout.v
+# write_verilog -noattr tmpout.v
+# '
+
+
+
+
+# /home/alira/FYP/linux/yosys/build/yosys -p '
+# read_verilog /home/alira/FYP/linux/CSAW/modulefiles.v /home/alira/FYP/tmp2.v
+# hierarchy -check -top pancham
+# flatten
+# proc; opt; fsm; opt; memory; opt
+# techmap; opt
+# write_verilog -noattr tmpout.v
 # '
 
 
@@ -90,3 +104,59 @@ def readbench():
     subprocess.run("python3 /home/alira/FYP/python/cleanoutputverilog.py /home/alira/FYP/btv_org_yosys.v ",shell=True)
     del org
     return netlist
+
+
+# subprocess.run(cmd2.format("/home/alira/FYP/tmp/tmp_sll.bench",
+#                        "/home/alira/FYP/tmp/tmp_sll.v"), shell=True)
+
+# subprocess.run(cmd2.format("/home/alira/FYP/linux/MSATLL/benchmarks/original/apex4.bench",
+#                        "/home/alira/FYP/tmp/tmp_org.v"), shell=True)
+
+
+
+# python3 /home/alira/FYP/sat_attack/run.py /home/alira/FYP/tmp.bench /home/alira/FYP/tmp2.bench b
+# python3 /home/alira/FYP/sat_attack/run.py /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/design1.bench /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/oracle1.bench b
+
+
+# ./sld /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/design1.bench /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/oracle1.bench
+
+# /home/alira/FYP/linux/yosys/build/yosys -p '
+# read_verilog /home/alira/FYP/linux/CSAW/modulefiles.v /home/alira/FYP/linux/CSAW/ASSURE_LOCKED/design1/design1_netlist.v
+# hierarchy -check -top fsm_0_obf
+# flatten
+# proc; opt; fsm; opt; memory; opt
+# techmap; opt
+# dfflibmap -liberty /home/alira/FYP/vlib/mycells.lib
+# abc -liberty /home/alira/FYP/vlib/mycells.lib
+# write_verilog -noattr tmpout.v
+# '
+
+
+# /home/alira/FYP/linux/yosys/build/yosys -p '
+# read_verilog /home/alira/FYP/linux/vga_demo.v
+# hierarchy -check -top vga_demo
+# flatten
+# proc; opt; fsm; opt; memory; opt
+# techmap; opt
+# dfflibmap -liberty /home/alira/FYP/vlib/mycells.lib
+# abc -liberty /home/alira/FYP/vlib/mycells.lib
+# write_verilog -noattr /home/alira/FYP/linux/assign_tech.v
+# '
+
+# """
+# /home/alira/FYP/linux/yosys/build/yosys -p
+# read_verilog tmptop.v 
+# hierarchy -check -top top
+# flatten
+# proc; opt; fsm; opt; memory; opt
+# techmap; opt
+# dfflibmap -liberty /home/alira/FYP/vlib/mycells.lib
+# abc -liberty /home/alira/FYP/vlib/mycells.lib
+# write_verilog -noattr tmp.v
+# """
+
+
+# "/home/alira/FYP/linux/yosys/build/yosys -p 'read_verilog tmptop.v ;hierarchy -check -top top;flatten ;proc; opt; fsm; opt; memory; opt;dfflibmap -liberty /home/alira/FYP/vlib/mycells.lib;abc -liberty /home/alira/FYP/vlib/mycells.lib;write_verilog -noattr tmp.v'"
+
+
+# subprocess.run(cmds,shell=True)

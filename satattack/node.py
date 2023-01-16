@@ -29,10 +29,10 @@ class DFF:
     self.Clock_curr=self.Clock.value()
   
   def __str__(self):
-    return "<" + str(self.name) + ": " + str(self.type) + " " + str(self.inputs) + ">"
+    return "<" + str(self.name) + ": " + str(self.type2) + " " + str(self.inputD) + ">"
 
   def __repr__(self):
-    return "<" + str(self.name) + ": " + str(self.type) + " " + str(self.inputs) + ">"
+    return "<" + str(self.name) + ": " + str(self.type2) + " " + str(self.inputD) + ">"
 
 
     

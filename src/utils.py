@@ -5,9 +5,47 @@ import random
 #gates=['not_g', 'and_g', 'or_g', 'nand_g', 'nor_g']
 #gates=['NOT', 'AND', 'OR', 'NAND', 'NOR']
 v_gates_ps="_g"
-verilog_gates=['BUF','NOT_g', 'AND_g', 'OR_g', 'NAND_g', 'NOR_g','XOR_g','XNOR_g']
+verilog_gates=['BUF_g','NOT_g', 'AND_g', 'OR_g', 'NAND_g', 'NOR_g','XOR_g','XNOR_g']
 bench_gates=['DFF','BUF','NOT', 'AND', 'OR', 'NAND', 'NOR','XOR','XNOR']
 
+
+
+
+####################################################################################################################################
+####################################################################################################################################
+def text_to_pattern(text):
+  text=re.sub(r"\\",r"\\\\",text)
+
+  text=re.sub(r"\[",r"\[",text)
+  text=re.sub(r"\]",r"\]",text)
+
+  text=re.sub(r"\{",r"\{",text)
+  text=re.sub(r"\}",r"\}",text)
+  
+  # text=re.sub("","",text)
+  return text
+
+
+####################################################################################################################################
+####################################################################################################################################
+
+def gen_busport(node,size:int):
+    port=""
+    if(type(node)==str):
+        for i in range(size):
+            port+=node+format(str(size-i-1),"")+", "
+        port=port[:-2]
+    return port
+
+####################################################################################################################################
+####################################################################################################################################
+
+
+def get_diference(a,b):
+    tmpa=list(set(a) - set(b))
+    tmpb=list(set(b) - set(a))
+    tmplist=[tmpa,tmpb]#list(set(tmpa)|set(tmpb))
+    return tmplist
 
 ####################################################################################################################################
 ####################################################################################################################################
@@ -28,7 +66,7 @@ def getnodeport(netlist, buskey):
     if (len(tmpval) != 1):
         raise Exception("CHECK "+buskey.upper()+" NODES")
 
-    portnodes, busnodes = io_port(tmpval[0].split(", "), mode=buskey)
+    portnodes, busnodes,_ = io_port(tmpval[0].split(", "), mode=buskey)
     # print(io_port(tmpval[0].split(", ")))
     return portnodes, busnodes
 
@@ -38,7 +76,10 @@ def getnodeport(netlist, buskey):
 
 def io_port(inputs, mode="input"):
     tmpdict = {}
+    replace_=[]
     for i in inputs:
+        # if(re.findall("(.*)_(\d+)_?",i)!=[]):
+        #     i=re.sub("(.*)_(\d+)_?",r"\1"+"["+r"\2"+"]",i)
         if ("[" in i and "]" in i):
             tmpis = i.split("[")
             if tmpis[0] in tmpdict:
@@ -58,13 +99,14 @@ def io_port(inputs, mode="input"):
         if (tmpdict[i] != 0):
             #print("["+str(tmpdict[i])+":0] "+i)
             inputnodes = inputnodes+mode+" ["+str(tmpdict[i])+":0] "+i+"; "
+            replace_.append(i)
         else:
-            # print(i)
+            # replace_.remove(i)
             inputnodes = inputnodes+mode+" "+i+"; "
 
     # inputnodes=inputnodes[:]
     portnodes = portnodes[:-1]
-    return portnodes, inputnodes
+    return portnodes, inputnodes,replace_
 
 ####################################################################################################################################
 ####################################################################################################################################
@@ -89,8 +131,9 @@ def HammingDistance(x: str, y: str) -> int:
 ####################################################################################################################################
 ####################################################################################################################################
 
-def randKey(bits, seed=10):
-    random.seed(seed)
+def randKey(bits, seed=None):
+    if(seed!=None):
+        random.seed(seed)
     intkey = random.randint(0, (2**bits)-1)
     tmpkey = format(intkey, "0"+str(bits)+"b")
     return intkey, tmpkey
@@ -98,17 +141,40 @@ def randKey(bits, seed=10):
 ####################################################################################################################################
 ####################################################################################################################################
 
+
+"module antisat_{name} (A,B,Q);parameter keyval = {key},n={ic}; input [n-1:0] A; input [2n-1:0] B; output Q;always @ (A or B) begin  if (B == keyval) begin    Q = 1;  end else begin    Q = 0;end end endmodule"
+"module antisat_{name} (A,KEY,Q);parameter n={ic}; input [n-1:0] A; input [2n-1:0] B; output Q;always @ (A or B) begin  if (B == {keyval}) begin    Q = 1;  end else begin    Q = 0;end end endmodule"
+
+"module antisat_{name} (A,KEY,Q);parameter n={ic};input [n-1:0] A; input [2n-1:0] KEY; output Q; wire Q1,Q2; g_block g(A,KEY[n-1:0],Q1); g_block gc(A,KEY[2n-1:n],Q2); assign Q = Q1 & Q2;endmodule \nmodule g_block(X,KEY_X,Q);parameter n={ic};input [n-1:0]X;input [n-1:0]KEY_X;output reg Q;wire [n-1:0]X_xor;assign X_xor=X^KEY_X;integer k;always@(*)begin Q=1;for(k=0;k<n-1;k=k+1)begin if(X_xor[k]==0) Q=0;end end endmodule"
+
+def gencc_AntiSAT(modulename, inputs):
+    codestr="module {name} (A,KEY,Q);parameter n={ic};input [n-1:0] A; input [2*n-1:0] KEY; output Q; wire Q1,Q2; g_block g(A,KEY[n-1:0],Q1); g_block gc(A,KEY[2*n-1:n],Q2); assign Q = Q1 & (~Q2);endmodule \n\nmodule g_block(X,KEY_X,Q);parameter n={ic};input [n-1:0]X;input [n-1:0]KEY_X;output reg Q;wire [n-1:0]X_xor;assign X_xor=X^KEY_X;integer k;always@(*)begin Q=1;for(k=0;k<n-1;k=k+1)begin if(X_xor[k]==0) Q=0;end end endmodule"
+    ic = len(inputs)
+    portnodes, _,_ = io_port(inputs)
+    
+    comver = codestr.format(name=modulename,ic=ic)
+    port=modulename+" {init} ("+"{portnodes},"+"{KEY}"+",{Q}); "
+
+    return re.sub(";", ";\n", comver), portnodes,port
+
+
+####################################################################################################################################
+####################################################################################################################################
+
 def gencc(modulename, inputs, key):
     ic = len(inputs)
-    portnodes, inputnodes = io_port(inputs)
+    portnodes, inputnodes,_ = io_port(inputs)
     if (key == None):
         comver = "module "+modulename+"("+portnodes+",KEY,Q); " + inputnodes + "input ["+str(ic-1)+":0]KEY;" + " wire ["+str(
             ic-1)+":0]A; assign A={"+portnodes+"}; output reg Q; always@(*)begin if(A==KEY)Q=1;else Q=0;end endmodule"
+        port=modulename+" {init} ("+portnodes+",{key},{Q}); "
     else:
         comver = "module "+modulename+"("+portnodes+",Q); " + inputnodes + " wire ["+str(
             ic-1)+":0]A; assign A={"+portnodes+"}; output reg Q; always@(*)begin if(A=="+str(ic)+"'d"+str(key)+")Q=1;else Q=0;end endmodule"
+        port=modulename+" {init} ("+portnodes+",{Q}); "
 
-    return re.sub(";", ";\n", comver), portnodes
+    return re.sub(";", ";\n", comver), portnodes,port
+
 
 ####################################################################################################################################
 ####################################################################################################################################
@@ -116,14 +182,19 @@ def gencc(modulename, inputs, key):
 
 def hammingcc(modulename, inputs, h, key=None):
     ic = len(inputs)
-    portnodes, inputnodes = io_port(inputs)
+    portnodes, inputnodes,_ = io_port(inputs)
+    # print("HERE ",io_port(inputs))
     if (key == None):
         comver = "module "+modulename+"("+portnodes+",KEY,Q); " + inputnodes + "input ["+str(ic-1)+":0]KEY; wire ["+str(
             ic-1)+":0]A; assign A={"+portnodes+"}; output reg Q; integer Qr,count,i; always@(*)begin Qr=KEY^A;count=0; for(i=0;i<"+str(ic)+";i=i+1)begin if(Qr[i]) count=count+1;end if(count=="+str(h)+")Q=1;else Q=0; end endmodule"
+        port=modulename+" {init} ("+portnodes+",{key},{Q}); "
     else:
         comver = "module "+modulename+"("+portnodes+",Q); " + inputnodes + " wire ["+str(ic-1)+":0]A; assign A={"+portnodes+"}; output reg Q; integer Qr,count,i; always@(*)begin Qr="+str(
             ic)+"'d"+str(key)+"^A;count=0; for(i=0;i<"+str(ic)+";i=i+1)begin if(Qr[i]) count=count+1;end if(count=="+str(h)+")Q=1;else Q=0; end endmodule"
-    return re.sub(";", ";\n", comver), portnodes
+        port=modulename+" {init} ("+portnodes+",{Q}); "
+    return re.sub(";", ";\n", comver), portnodes,port
+
+
 
 
 ####################################################################################################################################
@@ -146,6 +217,8 @@ def format_verilog(netlist,remove_wire=False):
   netlist=re.sub("\s+"," ",netlist)
   netlist=re.sub(" ?; ?",";\n",netlist)
   netlist=re.sub("endmodule","endmodule\n",netlist)
+  netlist=re.sub("end ","end\n",netlist)
+  netlist=re.sub("begin","begin\n",netlist)
   return netlist
 
 ####################################################################################################################################
@@ -157,7 +230,7 @@ def format_bench(netlist):
 #   netlist=re.sub("//.*\n","",netlist)
 #   netlist=re.sub("[/][*].*[*][/]","",netlist)
 #   netlist=re.sub("#.*\n","\n",netlist)
-
+  netlist=re.sub("#.*\n","\n",netlist)
   netlist=re.sub("="," = ",netlist)
   netlist=re.sub("\n+","",netlist)
   netlist=re.sub("\s+"," ",netlist)
@@ -180,10 +253,17 @@ def extract_gates_b(bench):
     tmp={i:[] for i in bench_gates}
     gate_count = {i: 0 for i in tmp}
     for i in bench_gates:
-        if i=='NOT' or i=='BUF' or i=='DFF':
-            tmp[i]=re.findall(" ?(.*) = "+ i +"\((.*)\)\n?",bench)
+        if(i.lower() in bench):
+            ix=i.lower()
         else:
-            tmp[i]=re.findall(" ?(.*) = "+ i +"\((.*), ?(.*)\)\n?",bench)
+            ix=i
+
+        if i=='NOT' or i=='BUF' or i=='DFF':
+            tmp[i]=re.findall(" ?(.*) = "+ ix +"\((.*)\)\n?",bench)
+
+            i.lower()
+        else:
+            tmp[i]=re.findall(" ?(.*) = "+ ix +"\((.*), ?(.*)\)\n?",bench)
         
         gcount = len(tmp[i])
         if (gcount == 0):
@@ -230,20 +310,76 @@ def bin_to_dict(vdict,bin):
 ####################################################################################################################################
 
 
-def getio_v(verilog,mode="input"):
-  tmp=re.findall(mode.lower()+" (.*);",verilog)
-  port=""
+# def extract_io_v(verilog,mode="input"):
+#     tmp=re.findall(mode.lower()+" (.*);",verilog)
+#     for i in tmp:
+#         tmpi=i.split(",")
+#         print(tmpi)
+
+
+# def getio_v(verilog,mode="input"):
+#   tmp=re.findall(mode.lower()+" (.*);",verilog)
+#   tmp=tmp[0].split(",")
+# #   print(tmp[0].split(","))
+#   #if("," in i) 
+#   port=""
+#   nodes=[]
+#   for ii in tmp:
+#     i=ii.strip()
+#     if(("[" in i) and ("]" in i)):
+#       tmpi=re.findall("(.*)\[(.*):(.*)]",i)[0]
+#       port+=tmpi[0]+","
+#       for j in range(int(tmpi[2]),int(tmpi[1])+1):
+#         # print(tmpi[0]+"["+str(j)+"]")
+#         nodes.append(tmpi[0]+"["+str(j)+"]")
+#     else:
+#       port+=i+","
+#       nodes.append(i)
+# #   print(nodes)
+#   return nodes,port
+
+
+
+####################################################################################################################################
+####################################################################################################################################
+
+
+def extract_gates_va(verilog):
+  tmp={}
+  gate_count = {}
+  tmp["BUF"]=re.findall("assign (.*) = (.*) ?;",verilog)
+  tmp["NOT"]=re.findall("assign (.*) = ~(.*) ?;",verilog)
+  tmp["AND"]=re.findall("assign (.*) = (.*) & (.*) ?;",verilog)
+  tmp["OR"]=re.findall("assign (.*) = (.*) | (.*) ?;",verilog)
+  tmp["XOR"]=re.findall("assign (.*) = (.*) ^ (.*) ?;",verilog)
+  
+  for i in tmp.keys():
+    if(tmp[i]!=[]):    
+        gate_count[i] = len(tmp[i])
+  return tmp,gate_count
+
+
+####################################################################################################################################
+####################################################################################################################################
+
+
+def extract_io_v(verilog,mode="input"):
   nodes=[]
+  port=""
+  tmp=re.findall(mode.lower()+" (.*);",verilog)
   for i in tmp:
-    if(("[" in i) and ("]" in i)):
-      tmpi=re.findall("(.*)\[(.*):(.*)]",i)[0]
-      port+=tmpi[0]+","
-      for j in range(int(tmpi[2]),int(tmpi[1])+1):
-        # print(tmpi[0]+"["+str(j)+"]")
-        nodes.append(tmpi[0]+"["+str(j)+"]")
+    if("[" in i):
+      ei,si,tmpi=re.findall(r"\[(\d+)\:(\d+)\] (.*)",i)[0]
+      port+=tmpi+","
+      for i in range(int(si),int(ei)+1):
+        nodes.append(tmpi+"["+str(i)+"]")
+    elif("," in i):
+        tmpi=i.split(",")
+        nodes=merge_lists((nodes,tmpi))
+
     else:
-      port+=i+","
       nodes.append(i)
+      port+=i+","
   return nodes,port
 
 ####################################################################################################################################
@@ -259,11 +395,11 @@ def extract_gates_v(verilog):
 
   for i in verilog_gates:
     if(i=="NOT_g"):
-        tmpx=re.findall(" "+verilog_gates[0] +" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
+        tmpx=re.findall(" ?"+verilog_gates[1] + r" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
     elif(i=="BUF_g"):
-        tmpx=re.findall(" "+verilog_gates[1] +" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
+        tmpx=re.findall(" ?"+verilog_gates[0] +r" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
     else:
-        tmpx=re.findall(" "+i +" .* \( .A\((.*)\), .B\((.*)\), .Y\((.*)\) \) ?;",verilog)
+        tmpx=re.findall(" ?"+i +r" .* \( .A\((.*)\), .B\((.*)\), .Y\((.*)\) \) ?;",verilog)
 
     if(tmpx!=[]):    
         tmpi=re.sub("_g","",i)

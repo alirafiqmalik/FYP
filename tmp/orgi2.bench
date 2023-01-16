@@ -1,0 +1,5 @@
+INPUT(rxdp)
+INPUT(LineState_o_0_)
+OUTPUT(i_rx_phy_rxdp_s_r_Q)
+OUTPUT(LineState_o_0__D)
+i_rx_phy_rxdp_s_r_Q = AND(LineState_o_0__D,LineState_o_0_)

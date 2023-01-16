@@ -44,8 +44,16 @@ class CircuitBuilder():
         """
         # print("TESTING = \n",nodes.keys(),"\n\n",name)
         # print(name in nodes.keys())
-        node = nodes[name]
+        # print(name)
+        
+        
+        if(name=="1'h0"):
+            node=False
 
+        elif(name=="1'h1"):
+            node=True
+        else:
+            node = nodes[name]
 
         if name in self.visited_nodes:
             return node.z3_repr
@@ -59,6 +67,7 @@ class CircuitBuilder():
             self._build_input(node, name)
         else:
             fanin = [self._build_node(nodes, child_name, key_suffix) for child_name in node.inputs]
+            # print(node.inputs)
             self._build_gate(node, fanin)
 
         return node.z3_repr

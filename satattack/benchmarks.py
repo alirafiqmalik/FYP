@@ -1,28 +1,48 @@
 import circuit
-from src.utils import getio_v,extract_gates_v,extract_io_b,extract_gates_b
+from src.utils import extract_io_v,extract_gates_v,extract_io_b,extract_gates_b,format_verilog
 from node import Node,DFF
 
 
 
 def read_nodes_v(filename):
   verilog=open(filename).read()
-  inp,_=getio_v(verilog,'input')
-  out,_=getio_v(verilog,'output')
+  verilog=format_verilog(verilog)
+  inp,_=extract_io_v(verilog,'input')
+  out,_=extract_io_v(verilog,'output')
   gates,_=extract_gates_v(verilog)
-  
+
+   
   node={}
   for i in inp:
-    # print(i,[],"Primary Input","Key Input")
+    # print(i)
     if('key' in i):
       node[i]=Node(i,[],"Key Input")
     else:
       node[i]=Node(i,[],"Primary Input")
 
-
+  # print(gates["BUF"])
   for i in gates:
     for j in gates[i]:
-      # print(i.title(),j[-1],list(j[:-1]))
-      node[j[-1]]=Node(j[-1],list(j[:-1]),i.title())
+      # print("HERE ",i.title(),j[-1],list(j[:-1]))
+      # print(j[-1])
+      # if(i=="BUF"):
+
+      tmpj=list(j[:-1])
+      # title=i.title()
+      # if("1'h0" in j[:-1]):
+      #   print("HERE = ",j[-1],j[:-1],type(j[:-1]),i.title())
+      #   xji = j[:-1].index("1'h0")
+      #   tmpj = tmpj[:xji]+[False]+tmpj[xji+1:]
+      #   print(tmpj,type(i.title))
+      #   # title=+="_True"
+      # elif("1'h1" in j[:-1]):
+      #   print("HERE = ",j[-1],j[:-1],type(j[:-1]),i)
+      #   xji = j[:-1].index("1'h1")
+      #   tmpj = tmpj[:xji]+[True]+tmpj[xji+1:]
+      #   print(tmpj)
+      
+      node[j[-1]]=Node(j[-1],tmpj,i.title())
+
   # print(out)
   return node,out
 
@@ -34,6 +54,7 @@ def read_nodes_b(filename):
   inp= extract_io_b(netlist,mode='input')
   out=extract_io_b(netlist,mode='output')
   gates,_=extract_gates_b(netlist)
+
 
 
   node={}
@@ -50,6 +71,7 @@ def read_nodes_b(filename):
       node[i]=Node(i,[],"Primary Input")
 
   for i in gates:
+    # print(i)
     for j in gates[i]:
       # print(i.title(),j[-1],list(j[:-1]))
       # if(i=="DFF"):
@@ -60,7 +82,7 @@ def read_nodes_b(filename):
       #     print(i,"######################################## DFF ERROR NO RST #####################################")
       # else:
       node[j[0]]=Node(j[0],list(j[1:]),i.title())
-  # print(out)
+  # print("T", node)
   return node,out
 
 
@@ -78,9 +100,10 @@ def read_ckt(filename,file_type):
     elif(file_type=='v'):
       nodes, output_names = read_nodes_v(filename)
     else:
-      print("ERROR")
+      Exception("ERROR")
+      return None
 
-
+    # print("H ",nodes)
     # print("There  ",nodes['a'],type(nodes['a']))
     return circuit.Circuit.from_nodes(nodes, output_names)
 

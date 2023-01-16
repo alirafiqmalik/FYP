@@ -26,6 +26,7 @@ class Circuit:
         returns: Circuit object corresponding to nodes given
         """
         builder = CircuitBuilder()
+        # print(nodes)
         z3_ckt, inputs = builder.build(nodes, output_names, key_suffix)
         return cls(z3_ckt, inputs)
 
