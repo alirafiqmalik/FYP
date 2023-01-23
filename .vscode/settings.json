@@ -73,5 +73,6 @@
     "valarray": "cpp",
     "variant": "cpp"
   },
-  "files.autoSave": "afterDelay"
+  "files.autoSave": "afterDelay",
+  "python.analysis.typeCheckingMode": "basic"
 }

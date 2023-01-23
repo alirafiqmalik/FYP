@@ -1,6 +1,6 @@
 from src.netlist import *
 import subprocess
-from src.utils import sortio, randKey, gencc, hammingcc,format_verilog, io_port,gen_busport,extract_io_v,extract_gates_va
+from src.utils import sortio, randKey, gencc, hammingcc,format_verilog, io_port
 from src.cmds import *
 
 ####################################################################################################################################
@@ -8,35 +8,65 @@ from src.cmds import *
 ####################################################################################################################################
 ####################################################################################################################################
 
-# from src.LL import LogicLocking
-# from src.utils import bench_to_verilog
-
-
-# b=open("/home/alira/FYP/linux/MSATLL/benchmarks/original/apex4.bench").read()
-# tmp=LogicLocking(b)
-# tmp.SLL(10,75)
-# tmp.graph_to_bench("/home/alira/FYP/tmp/tmp_sll.bench")
-
-# bl=open("/home/alira/FYP/tmp/tmp_sll.bench").read()
-
-# to,_=bench_to_verilog(b)
-# with open("/home/alira/FYP/tmp/tmp_org.v",'w') as f:
-#   f.write(to)
-
-# t1,_=bench_to_verilog(bl)
-# with open("/home/alira/FYP/tmp/tmp_sll.v",'w') as f:
-#   f.write(t1)
-
 
 class LogicLocking(Netlist):
     def __init__(self, netlist: str) -> None:
         super().__init__(netlist)
         self.keygates = {'XOR': 0, 'XNOR': 0}
         self.keygatescount = 0
+        self.FSgates = {'XOR': 0, 'XNOR': 0}
+        self.FSgatescount = 0
+        self.FRgates = {'XOR': 0, 'XNOR': 0}
+        self.FRgatescount = 0
+        self.FSinputs = []
+        self.FRinputs = []
 
     def keynodes(self) -> dict:
         return self.keygates
 
+    def FSnodes(self) -> dict:
+        return self.FSgates
+
+    def FRnodes(self) -> dict:
+        return self.FRgates
+
+    def InsertFSGate(self, NodeA: str, NodeB: str, gatetype: str = 'XOR',) -> None:
+        FSgatescount = self.gates[gatetype]
+        FSgate = gatetype+"_"+str(FSgatescount)
+
+        FRgatescount = FSgatescount+1
+        FRgate = gatetype+"_"+str(FRgatescount)
+
+        self.circuitgraph.remove_edge(NodeA, NodeB)
+
+        keywireS = "FSwire"+str(self.FSgatescount)
+        keywireR = "FRwire"+str(self.FRgatescount)
+
+        self.circuitgraph.add_edge(NodeA, keywireS)
+        self.circuitgraph.add_edge(keywireS, FSgate)
+        self.circuitgraph.add_edge(FSgate, keywireR)
+
+        self.circuitgraph.add_edge(keywireR, FRgate)
+
+        self.circuitgraph.add_edge(FRgate, NodeB)
+
+        self.circuitgraph.add_edge("FSI_"+str(self.FSgatescount), FSgate)
+        self.circuitgraph.add_edge("FRI_"+str(self.FRgatescount), FRgate)
+
+        self.FSinputs.append("FSI_"+str(self.FSgatescount))
+        self.FRinputs.append("FRI_"+str(self.FRgatescount))
+
+        self.wires.append(keywireS)
+        self.wires.append(keywireR)
+
+        self.gates[gatetype] += 2
+        self.gatecount += 2
+
+        self.FSgates[gatetype] += 1
+        self.FSgatescount += 1
+
+        self.FRgates[gatetype] += 1
+        self.FRgatescount += 1
 
     def InsertKeyGate(self, NodeA: str, NodeB: str, gatetype: str = 'XOR') -> None:
         keygatecount = self.gates[gatetype]
@@ -65,7 +95,7 @@ class LogicLocking(Netlist):
         self.keygates[gatetype] += 1
         self.keygatescount += 1
 
-    def RLL(self, n: int, key: int):
+    def RLL(self, n: int, key: int) -> list:
         bitkey = format(key, "b")
         print(2**n, "<----->", key, "<----->", (2**n) >= key)
         if (n > len(bitkey)):
@@ -90,7 +120,7 @@ class LogicLocking(Netlist):
             else:
                 self.InsertKeyGate(inp[0], self.wires[tp], 'XOR')
         
-    def SLL(self, n: int, key: int):
+    def SLL(self, n: int, key: int) -> list:
         bitkey = format(key, "b")
         print(2**n, "<----->", key, "<----->", (2**n) >= key)
         if (n > len(bitkey)):
@@ -138,11 +168,108 @@ class LogicLocking(Netlist):
                 maxtmp = tmp
                 maxout = i
         return maxtmp, maxout
-    
+
+    def getCRunits(self, key=None, HD=0):  # 734
+        # tmp,outnode=circuit.MaxInputCone()
+        tmp = self.inputs
+        sortio(tmp)
+        if (key == None):
+            key, tmpkey = randKey(len(tmp))
+            print(len(tmp), " ===>> ", len(tmpkey),
+                  " ===>> ", key, " ===>> ", tmpkey, "\n")
+
+        # cc= hammingcc("corrupt",tmp,HD,key)
+        # rsc=hammingcc("restore",tmp,HD,None)
+        cc = gencc("corrupt", tmp, key)
+        rsc = gencc("restore", tmp, None)
+        return cc, rsc
+
+    def SFLLHD(self, outputpath="./output.v", HD=None, key=None):  # 734
+        cctxt, rstx = self.getCRunits(key=key, HD=HD)
+        inpnodes = self.inputs
+        sortio(inpnodes)
+        outnodes = self.outputs
+        for coneout in outnodes:
+            coneinp = self.FindConeinputs(coneout)
+            sortio(coneinp)
+            # if(tmp==coneinp):
+            tmpi = list(self.circuitgraph.predecessors(coneout))[0]
+            self.InsertFSGate(tmpi, coneout)
+
+        keyi = ["keyinput"+i for i in inpnodes]
+        sortkey = io_port(keyi)
+
+        self.graph_to_bench("./tmp/output_graph.bench")
+
+        subprocess.run(cmd2.format("./tmp/output_graph.bench",
+                       "./tmp/btv_output_graph.v"), shell=True)
+
+        
+        # subprocess.run(
+        #     "python3 /home/alira/FYP/python/cleanoutputverilog.py /home/alira/FYP/btv_output_graph.v \/home/alira/FYP/output", shell=True)
+
+        # format_verilog()
+
+        # netlist=re.sub(sys.argv[2],r"top",netlist)
+        netlist = open("./tmp/btv_output_graph.v").read()
+        netlist = format_verilog(netlist)
+        print( "HERE",re.findall("module .* ?\((.*)\) ?;", netlist))
+        netlist = re.sub("module .* ?\((.*)\) ?;",
+                         r"module top (\1) ;", netlist)
+        
+        with open("./tmp/btv_output_graph.v", 'w') as f:
+            f.write(netlist)
+
+        tmpx = "corrupt C" + "("+cctxt[1]+","+"FSO"+");\nrestore R" + \
+            "("+rstx[1]+",{"+sortkey[0]+"},FRO"+");\n"
+
+        for i in range(self.FSnodes()["XOR"]):
+            tmpss = "FSI_"+str(i)
+            tmpsr = "FRI_"+str(i)
+
+            tmpx += "assign FSI_"+str(i)+"=FSO;\n"
+            tmpx += "assign FRI_"+str(i)+"=FRO;\n"
+
+            netlist = re.sub("input .*"+tmpss+".*;", "", netlist)
+            netlist = re.sub(tmpss+" ?,", "", netlist)
+
+            netlist = re.sub("input.*"+tmpsr+".*;", "", netlist)
+            netlist = re.sub(tmpsr+" ?,", "", netlist)
+
+        tmpx += "endmodule\n"
+
+        netlist = re.sub("(module .*\(.*)(\);)", r"\1," +
+                         sortkey[0]+");"+sortkey[1], netlist)
+
+        netlist = re.sub("\s+", " ", netlist)
+        netlist = re.sub(";", ";\n", netlist)
+
+        netlist = re.sub("endmodule", tmpx, netlist)
+        netlist += "\n\n"+cctxt[0]
+        netlist += "\n\n"+rstx[0]
+
+        with open("./tmp/tmp_input.v", 'w') as f:
+            f.write(netlist)
+
+        subprocess.run(cmd1.format(inputfile="./tmp/tmp_input.v",rtlv= "./tmp/tmpoutput.v",
+                       outputfile=outputpath,cppfile="", getcpp="", gettmpv=""), shell=True)
+        # print("###################################################\nDONE")
+        
+        # subprocess.run(
+        #     "python3 /home/alira/FYP/python/misc_vtb_obs.py", shell=True)
+
+        # subprocess.run("python3 /home/alira/FYP/python/cleanoutputverilog.py "+outputpath,shell=True)
 
     def graph_to_bench(self, outpath: str) -> None:
         graphtonetlist = ""
         for i in self.inputs:
+            graphtonetlist += "INPUT("+i+")"+"\n"
+            # print("INPUT("+i+")")
+
+        for i in self.FSinputs:
+            graphtonetlist += "INPUT("+i+")"+"\n"
+
+        for i in self.FRinputs:
             graphtonetlist += "INPUT("+i+")"+"\n"
 
         for i in self.outputs:
@@ -167,73 +294,3 @@ class LogicLocking(Netlist):
 ####################################################################################################################################
 ####################################################################################################################################
 ####################################################################################################################################
-
-# from src.LL import PostSAT_LL
-
-# b=open("/home/alira/FYP/tmp.v").read()
-# LL=PostSAT_LL(b,mode="verilog")
-# lockcir=LL.SFLL()
-
-# with open("/home/alira/FYP/tmptop.v","w") as f:
-#   f.write(lockcir)
-
-class PostSAT_LL:
-  def __init__(self,netlist,mode):
-    if(mode=="verilog"):
-      #self.netlist=format_verilog(netlist,remove_wire=False)
-      self.netlist=netlist
-      self.inputs,self.ip=extract_io_v(self.netlist,mode="input")
-      # print(getio_v(self.netlist,mode="input"))
-      self.outputs,self.op=extract_io_v(self.netlist,mode="output")
-      self.gates,self.gate_count=extract_gates_va(self.netlist)
-    # elif(mode=="bench"):
-    #   self.netlist=format_bench(netlist)
-    #   self.inputs=extract_io_b(self.netlist,mode="input")
-    #   self.outputs=extract_io_b(self.netlist,mode="output")
-    #   self.gates,self.gate_count=extract_gates_b(self.netlist)
-
-  def getCRunits(self, key=None, HD=0):  # 734
-    # tmp,outnode=circuit.MaxInputCone()
-    tmp = self.inputs
-    sortio(tmp)
-    if (key == None):
-        key, tmpkey = randKey(len(tmp))
-    else:
-      tmpkey=format(key, "0"+str(len(tmp))+"b")
-    
-    print(len(tmp), " ===>> ", len(tmpkey)," ===>> ", 2**len(tmpkey),
-              ">", key, " ===>> ", tmpkey, "\n")
-    
-    # cc= hammingcc("corrupt",tmp,HD,key)
-    # rsc=hammingcc("restore",tmp,HD,None)
-    cc = gencc("corrupt", tmp, key)
-    rsc = gencc("restore", tmp, None)
-    return cc, rsc
-  
-  def SFLL(self):
-    (corrupt,_,pc),(restore,_,rc)=self.getCRunits(key=102)
-
-    keyport=gen_busport("keyinput",len(self.inputs))
-
-    iportnodes, inputnodes,_ = io_port(self.inputs)
-    oportnodes, outputnodes,_ = io_port(self.outputs,mode="output")
-
-    tmporgport=""
-    tmpx=""
-    for i in self.outputs:
-      tmpx+="assign {} = {} ^ FSR ^ FSO;\n".format(i,i+"org")
-      tmporgport+=".{}({}),".format(i,i+"org")
-
-    for i in self.inputs:
-      tmporgport+=".{}({}),".format(i,i+"org")
-
-    tmporgport=tmporgport[:-1]
-
-    self.netlist=re.sub("module .* ?\((.*)\);",r"module org (\1);",self.netlist)
-
-    top="module top({topbus});\n{topio}\n{CRwire}\n{orgmodule}\n{CRmodule}\n{Xornet}\nendmodule"
-    top=top.format(topbus=iportnodes+","+oportnodes+","+keyport,topio="input {};\n{}\n{}".format(keyport,inputnodes,outputnodes),CRwire="",orgmodule="org o1({});".format(tmporgport),CRmodule=pc.format(init="to",Q="FSO")+"\n"+rc.format(init="ro",key="{%s}"%keyport,Q="FRO"),Xornet=tmpx)
-
-    return top+"\n\n{}\n\n{}\n\n{}".format(corrupt,restore,self.netlist)
-
-    

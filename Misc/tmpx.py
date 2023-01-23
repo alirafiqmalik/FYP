@@ -93,14 +93,12 @@ def gen_dip(inputs,keya,keyb,outputA,outputB,constraints):
 		return -1
   
 
-
-
-bench=open("/home/alira/FYP/tmp/hb.py").read()
+bench=open("/home/alira/FYP/tmp/output_graph.bench").read()
 gates,gate_count = extract_gates_b(bench)
 inputs = extract_io_b(bench, mode="input")
 outputs = extract_io_b(bench, mode="output")
+inputvar={i:Var() for i in inputs if("key" not in i)}
 
-# outputs.reverse()
 
 
 class gate:
@@ -124,7 +122,7 @@ for i in gates:
 # print(outputs)
 
 
-inputvar={i:Var() for i in inputs if("key" not in i)}
+
 
 def get_cir_r():
 	keyvar={}
@@ -186,121 +184,146 @@ def get_cir_r():
 
 # get_cir_r()
 
+
+
+# outputs.reverse()
+
+# /home/alira/FYP/tmp/output_graph.bench
+
+
+
 outputA,keyvarA=get_cir_r()
-outputB,keyvarB=get_cir_r()
 
 
 
 
-constraints=[And([Xor(outputA[i],outputB[i]) for i in outputA])]
-print(gen_dip(inputvar,keyvarA,keyvarB,outputA,outputB,constraints))
+# print(inputvar)
+# print(keyvarA)
 
-for i in keyvarA:
-	print(i,keyvarA[i].value(),keyvarB[i].value())
+node=list(outputA.keys())[0]
+
+print(outputA[node])
+
+
+result=Solve(Not(outputA[node]))
+print(result)
+
 # for i in inputvar:
-# 	print(i,inputvar[i].value())
-
-# print(dict_to_bin(inputvar,printo=True,reverse=False))
+# 	print(inputvar[i].value())
 
 
-
-o=oracle(dict_to_bin(inputvar,printo=True,reverse=False))
-print("oracle= ",o)
-o_dict=bin_to_dict(outputA,o)
-
-# print(o_dict)
-for i in outputA:
-	print(i,o_dict[i],outputA[i].value(),outputB[i].value())
+print(dict_to_bin(inputvar))
 
 
+# constraints=[And([Xor(outputA[i],outputB[i]) for i in outputA])]
+# print(gen_dip(inputvar,keyvarA,keyvarB,outputA,outputB,constraints))
 
+# for i in keyvarA:
+# 	print(i,keyvarA[i].value(),keyvarB[i].value())
+# # for i in inputvar:
+# # 	print(i,inputvar[i].value())
 
-
-
-tmpo=[Xor(o_dict[i],outputA[i]) for i in outputA]
-constraints.append(And(tmpo))
-
-tmpo=[Xor(o_dict[i],outputB[i]) for i in outputB]
-constraints.append(And(tmpo))
-
-# tmpi=[Xor(inputvar[i],inputvar[i].value()) for i in inputvar]
-# constraints.append(And(tmpi))
-
-
-print(gen_dip(inputvar,keyvarA,keyvarB,outputA,outputB,constraints))
+# # print(dict_to_bin(inputvar,printo=True,reverse=False))
 
 
 
-print(
-  gen_dip(
-    inputvar,keyvarA,keyvarB,outputA,outputB,
-    [And([Xor(outputA[i],True) for i in outputA])]#,And(constraints[1:])
-    )
-)
+# o=oracle(dict_to_bin(inputvar,printo=True,reverse=False))
+# print("oracle= ",o)
+# o_dict=bin_to_dict(outputA,o)
 
-
-for i in keyvarA:
-	print(i,keyvarA[i].value(),keyvarB[i].value())
+# # print(o_dict)
+# for i in outputA:
+# 	print(i,o_dict[i],outputA[i].value(),outputB[i].value())
 
 
 
 
 
 
+# tmpo=[Xor(o_dict[i],outputA[i]) for i in outputA]
+# constraints.append(And(tmpo))
 
-# t3 = AND(a,b)
-# t4 = XOR(a,b)
-# t5 = OR(t3,t1)
-# t6 = XOR(c,t0)
-# t7 = AND(t0,c)
+# tmpo=[Xor(o_dict[i],outputB[i]) for i in outputB]
+# constraints.append(And(tmpo))
 
-# Cout = XnOR(t5,key0)
-# S = XOR(t6,key1)
-# t1 = XOR(t7,key2)
-# t0 = XnOR(t4,key3)
+# # tmpi=[Xor(inputvar[i],inputvar[i].value()) for i in inputvar]
+# # constraints.append(And(tmpi))
 
 
+# print(gen_dip(inputvar,keyvarA,keyvarB,outputA,outputB,constraints))
 
-# _07a_ = NAND(c,a)
-#  _07_ =XOR(_07a_,key0)
-#  _08a_ = OR(c,a)
-#  _08_ =XOR(_08a_,key1)
-#  _09a_ = NAND(_07_,_08_)
-#  _09_ =XOR(_09a_,key2)
-#  _10a_ = NAND(b,_09_)
-#  _10_ =XOR(_10a_,key3)
-#  _05_ = OR(b,_09_)
-#  S = NAND(_10_,_05_)
-#  _06_ = NAND(b,_08_)
-#  Cout = NAND(_07_,_06_)
+
+
+# print(
+#   gen_dip(
+#     inputvar,keyvarA,keyvarB,outputA,outputB,
+#     [And([Xor(outputA[i],True) for i in outputA])]#,And(constraints[1:])
+#     )
+# )
+
+
+# for i in keyvarA:
+# 	print(i,keyvarA[i].value(),keyvarB[i].value())
+
+
+
+
+
+
+
+# # t3 = AND(a,b)
+# # t4 = XOR(a,b)
+# # t5 = OR(t3,t1)
+# # t6 = XOR(c,t0)
+# # t7 = AND(t0,c)
+
+# # Cout = XnOR(t5,key0)
+# # S = XOR(t6,key1)
+# # t1 = XOR(t7,key2)
+# # t0 = XnOR(t4,key3)
+
+
+
+# # _07a_ = NAND(c,a)
+# #  _07_ =XOR(_07a_,key0)
+# #  _08a_ = OR(c,a)
+# #  _08_ =XOR(_08a_,key1)
+# #  _09a_ = NAND(_07_,_08_)
+# #  _09_ =XOR(_09a_,key2)
+# #  _10a_ = NAND(b,_09_)
+# #  _10_ =XOR(_10a_,key3)
+# #  _05_ = OR(b,_09_)
+# #  S = NAND(_10_,_05_)
+# #  _06_ = NAND(b,_08_)
+# #  Cout = NAND(_07_,_06_)
  
  
 
 
 
 
-#   INPUT(a)
-#  INPUT(b)
-#  INPUT(c)
+# #   INPUT(a)
+# #  INPUT(b)
+# #  INPUT(c)
 
-#  INPUT(key0)
-#  INPUT(key1)
-#  INPUT(key2)
-#  INPUT(key3)
+# #  INPUT(key0)
+# #  INPUT(key1)
+# #  INPUT(key2)
+# #  INPUT(key3)
 
-#  OUTPUT(Cout)
-#  OUTPUT(S)
+# #  OUTPUT(Cout)
+# #  OUTPUT(S)
 
-#  _07a_ = NAND(c,a)
-#  _07_ = XNOR(_07a_,key0)
-#  _08a_ = OR(c,a)
-#  _08_ = XOR(_08a_,key1)
-#  _09a_ = NAND(_07_,_08_)
-#  _09_ = XNOR(_09a_,key2)
-#  _10a_ = AND(b,_09_)
-#  _10_ = XOR(_10a_,key3)
-#  _05_ = OR(b,_09_)
-#  S = NAND(_10_,_05_)
-#  _06_ = NAND(b,_08_)
-#  Cout = NAND(_07_,_06_)
+# #  _07a_ = NAND(c,a)
+# #  _07_ = XNOR(_07a_,key0)
+# #  _08a_ = OR(c,a)
+# #  _08_ = XOR(_08a_,key1)
+# #  _09a_ = NAND(_07_,_08_)
+# #  _09_ = XNOR(_09a_,key2)
+# #  _10a_ = AND(b,_09_)
+# #  _10_ = XOR(_10a_,key3)
+# #  _05_ = OR(b,_09_)
+# #  S = NAND(_10_,_05_)
+# #  _06_ = NAND(b,_08_)
+# #  Cout = NAND(_07_,_06_)
  

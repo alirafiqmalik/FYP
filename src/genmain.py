@@ -1,5 +1,5 @@
 import re
-from utils import extract_io_b
+from src.utils import extract_io_b
 
 bench=open("/home/alira/FYP/oracle/oracle.bench").read()
 inputs= extract_io_b(bench,mode='input')

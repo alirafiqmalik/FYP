@@ -1,5 +1,9 @@
-linux folder contains the yosys,CSAW,monosat libraries
-change yosys path in cmds to ur path for yosys
+# linux hyperlink folder contains following
+  linux folder contains the:
+  
+  yosys,CSAW libraries
+  
+  change yosys path in cmds to ur path for yosys
 
 
 # ##############################################################
@@ -23,3 +27,4 @@ git branch -M main
 git push -u upstream main
 ```
 # ##############################################################
+<!-- !git fetch https://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@github.com/alirafiqmalik/FYP.git -->
