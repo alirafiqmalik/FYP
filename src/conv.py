@@ -42,41 +42,67 @@ def bench_to_verilog(bench,clkpin="Clock",modulename="top"):
     #     verilog+=" end "
         
 
-    
+    wires=[]
+    verilog_wire=""
+    verilog_assign=""
     for i in gate_list:
         tmp = gates[i]
         
         if i == 'NOT':
             for j in tmp:
-                verilog += "assign " + j[0]+" = ~"+j[1]+" ;"
+                if((j[0] not in outputs) and (j[0] not in wires)):
+                    verilog_wire +="wire {};".format(j[0])
+                    wires.append(j[0])
+                verilog_assign += "assign " + j[0]+" = ~"+j[1]+" ;"
         elif i == 'BUF':
             for j in tmp:
-                verilog += "assign " + j[0]+" = "+j[1]+" ;"
+                if((j[0] not in outputs) and (j[0] not in wires)):
+                    verilog_wire +="wire {};".format(j[0])
+                    wires.append(j[0])
+                verilog_assign += "assign " + j[0]+" = "+j[1]+" ;"
         elif i == "AND":
             for j in tmp:
-                verilog += "assign " + j[0]+" = "+j[1]+" & "+j[2]+" ;"
+                if((j[0] not in outputs) and (j[0] not in wires)):
+                    verilog_wire +="wire {};".format(j[0])
+                    wires.append(j[0])
+                verilog_assign += "assign " + j[0]+" = "+j[1]+" & "+j[2]+" ;"
         elif i == "NAND":
             for j in tmp:
-                verilog += "assign " + j[0]+" = ~("+j[1]+" & "+j[2]+") ;"
+                if((j[0] not in outputs) and (j[0] not in wires)):
+                    verilog_wire +="wire {};".format(j[0])
+                    wires.append(j[0])
+                verilog_assign += "assign " + j[0]+" = ~("+j[1]+" & "+j[2]+") ;"
         elif i == "OR":
             for j in tmp:
-                verilog += "assign " + j[0]+" = "+j[1]+" | "+j[2]+" ;"
+                if((j[0] not in outputs) and (j[0] not in wires)):
+                    verilog_wire +="wire {};".format(j[0])
+                    wires.append(j[0])
+                verilog_assign += "assign " + j[0]+" = "+j[1]+" | "+j[2]+" ;"
         elif i == "NOR":
             for j in tmp:
-                verilog += "assign " + j[0]+" = ~("+j[1]+" | "+j[2]+") ;"
+                if((j[0] not in outputs) and (j[0] not in wires)):
+                    verilog_wire +="wire {};".format(j[0])
+                    wires.append(j[0])
+                verilog_assign += "assign " + j[0]+" = ~("+j[1]+" | "+j[2]+") ;"
         elif i == "XOR":
             for j in tmp:
-                verilog += "assign " + j[0]+" = "+j[1]+" ^ "+j[2]+" ;"
+                if((j[0] not in outputs) and (j[0] not in wires)):
+                    verilog_wire +="wire {};".format(j[0])
+                    wires.append(j[0])
+                verilog_assign += "assign " + j[0]+" = "+j[1]+" ^ "+j[2]+" ;"
         elif i == "XNOR":
             for j in tmp:
-                verilog += "assign " + j[0]+" = ~("+j[1]+" ^ "+j[2]+") ;"
+                if((j[0] not in outputs) and (j[0] not in wires)):
+                    verilog_wire +="wire {};".format(j[0])
+                    wires.append(j[0])
+                verilog_assign += "assign " + j[0]+" = ~("+j[1]+" ^ "+j[2]+") ;"
         elif i == "DFF":
-            # print(tmp)
+            print(tmp)
             for j in tmp:
-                verilog += "reg {};always@(posedge {})begin {}<={}; end ".format(j[0],clkpin,j[0],j[1])
+                verilog_assign += "reg {};always@(posedge {})begin {}<={}; end ".format(j[0],clkpin,j[0],j[1])
 
 
-    verilog += "endmodule"
+    verilog += verilog_wire + verilog_assign + "endmodule"
 
     
     verilog = format_verilog(verilog)
@@ -105,3 +131,32 @@ def bench_to_verilog(bench,clkpin="Clock",modulename="top"):
 ####################################################################################################################################
 # ver=open("/home/alira/FYP/linux/output.v").read()
 # verilog_to_bench(ver)
+
+
+
+def verilog_to_bench(verilog):
+    verilog = format_verilog(verilog)
+    inputs,_=extract_io_v(verilog,mode="input")
+    outputs,_=extract_io_v(verilog,mode="output")
+    
+    gates,gate_count=extract_gates_v(verilog)
+
+    bench=""
+
+    for i in inputs:
+        bench+="INPUT({})\n".format(i)
+    for i in outputs:
+        bench+="OUTPUT({})\n".format(i)
+
+
+    
+    for i in gates:
+        if(i=='BUF' or i=='NOT'):
+            for j in gates[i]:
+                bench+="{} = {}({})\n".format(j[1],i,j[0])
+        else:
+            for j in gates[i]:
+                bench+="{} = {}({},{})\n".format(j[2],i,j[0],j[1])
+    return bench
+
+

@@ -1,12 +1,11 @@
 import networkx as nx
-import random
 import re
 
 class Netlist():
   def __init__(self,netlist:str)->None:#mode:str="graph"
     self.netlist=netlist
-    self.inputs=re.findall("INPUT\((.*)\)\n",netlist)
-    self.outputs=re.findall("OUTPUT\((.*)\)\n",netlist)
+    self.inputs=re.findall(r"INPUT\((.*)\)\n",netlist)
+    self.outputs=re.findall(r"OUTPUT\((.*)\)\n",netlist)
     
     self.wires=[]
 

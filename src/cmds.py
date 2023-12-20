@@ -159,4 +159,8 @@ def readbench():
 # "/home/alira/FYP/linux/yosys/build/yosys -p 'read_verilog tmptop.v ;hierarchy -check -top top;flatten ;proc; opt; fsm; opt; memory; opt;dfflibmap -liberty /home/alira/FYP/vlib/mycells.lib;abc -liberty /home/alira/FYP/vlib/mycells.lib;write_verilog -noattr tmp.v'"
 
 
+
 # subprocess.run(cmds,shell=True)
+
+
+

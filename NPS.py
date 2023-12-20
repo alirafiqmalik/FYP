@@ -1,5 +1,5 @@
 
-from src.utils import randKey, gencc_AntiSAT,gencc, hammingcc, io_port,gen_busport
+from src.utils import randKey, gencc_AntiSAT,gencc_SarLock, hammingcc, io_port,gen_busport
 from src.utils import extract_io_v,extract_gates_v,extract_gates_va
 from src.utils import sortio,format_verilog,format_bench
 from src.conv import bench_to_verilog
@@ -98,6 +98,72 @@ class PostSAT_LL:
     return top+"\n\n{}\n\n{}".format(corrupt,self.netlist)
     
   
+   
+  def SarLock(self,key=None,key_lengthi=None,log=False):
+    if(key_lengthi==None):
+      inputs_key=self.inputs
+    else:
+      inputs_key=random.sample(self.inputs, key_lengthi)
+    
+    key_length=len(inputs_key)
+    if (key == None):
+      key, tmpkey = randKey(key_length)
+    else:
+      tmpkey=format(key, "0"+str(key_length)+"b")
+
+    keyport=gen_busport("keyinput",len(inputs_key))
+    iportnodes, inputnodes,_ = io_port(self.inputs)
+    oportnodes, outputnodes,_ = io_port(self.outputs,mode="output")
+
+
+    if(log):
+      self.logval={"bin":tmpkey,"int":key,"len":len(tmpkey),"inputs":inputs_key}
+    else:
+      print("\n\nGENERATING LOCKING COMPARATORS:")
+      print("\tNode Input Length = ",len(self.inputs))
+      print("\tKey Length = ",len(tmpkey))
+      print("\tKey Value in Int = ",key,"<",2**key_length)
+      print("\tKey Value in Binary = ", tmpkey, "\n")
+
+    tmporgport=""
+    tmpx=""
+    for i in self.outputs:
+      if("[" in i):
+        outorgi=re.sub(r"\[","_org[",i)
+      else:
+        outorgi=i+"_org"
+        
+      tmpx+="assign {} = {} ^ FC;\n".format(i,outorgi)
+
+    for i in iportnodes.split(","):
+      tmporgport+=".{}({}),".format(i,i)
+    for i in oportnodes.split(","):
+      tmporgport+=".{}({}),".format(i,i+"_org")
+
+    self.logval["inputs"]=inputs_key
+    self.logval["len"]=key_lengthi
+    tmporgport=tmporgport[:-1]
+
+    orgoutputwires=re.sub("output","wire",re.sub(";","_org;",outputnodes))
+
+    corrupt,portnodes_antisat,pc=gencc_SarLock("sarlock_top",inputs_key,key)
+
+
+    # m c,m dx,m
+
+    top="module top({topbus});\n{topio}\n{CRwire}\n{orgmodule}\n{CRmodule}\n{Xornet}\nendmodule"
+    top=top.format(
+                    topbus=iportnodes+","+oportnodes+","+keyport,
+                    topio="input {};\n{}\n{}\n".format(keyport,inputnodes,outputnodes),
+                    CRwire=orgoutputwires+"wire {};\n".format("FC"),
+                    orgmodule="\norg o1({});".format(tmporgport),
+                    CRmodule=pc.format(init="to",portnodes="{%s}"%portnodes_antisat,KEY="{%s}"%keyport,Q="FC"),
+                    Xornet=tmpx
+                    )
+
+    return top+"\n\n{}\n\n{}".format(corrupt,self.netlist)
+
+
   def getCRunits(self, key, HD=0,key_length=None):  # 734
     if(key_length==None):
       tmp=self.inputs
@@ -111,7 +177,7 @@ class PostSAT_LL:
     # rsc = gencc("restore", tmp, None)
     # print(cc)
     return tmp,cc, rsc
-  
+ 
   def SFLL(self,HD=0,key=None,key_lengthi=None,log=False):
     if(key_lengthi==None):
       key_length=len(self.inputs)
@@ -240,12 +306,14 @@ if __name__=="__main__":
     orgpath=orgdir+"{orgname}/{orgname}.v".format(orgname=orgname)
 
     verilog=open(orgpath).read()
+    
+
     LL=PostSAT_LL(verilog)
     with open("./tmp.v","w") as f:
       f.write(LL.netlist)
 
     LogFile=[]
-    for n in range(2,10):
+    for n in range(1,2):
       start = time.time()
       keylen=n
       print("#########################################################################")
@@ -255,7 +323,9 @@ if __name__=="__main__":
         print("Key length greater than Number of Inputs, Exiting Loop")
         break
       
-      lockedcir=LL.AntiSat(key_lengthi=keylen)#LL.SFLL(key_lengthi=keylen,log=True,HD=1)
+      lockedcir=LL.SarLock(key_lengthi=keylen,log=True)#LL.SFLL(key_lengthi=keylen,log=True,HD=1)
+
+
       logval=LL.get_log()
       with open("./tmptop.v","w") as f:
         f.write(lockedcir)
@@ -288,9 +358,21 @@ if __name__=="__main__":
       attack.run()
       SAT_extecution_time = time.time()-start
 
+
+      tmpk=""
+      tmpkeys=list(attack.key)
+      tmpkeys.sort(key=lambda x: re.findall(r"\d+",x)[0])
+      for i in tmpkeys:
+        tmpk='1' if(attack.key[i]) else '0' + tmpk
+    
+        
+        
+
       logval["attack_iterations"]=attack.iterations
+      logval["SAT_keyval"]=tmpk
       logval["locking_time"]=locking_time
       logval["SAT_extecution_time"]=SAT_extecution_time
+      
       print(logval)
 
       LogFile.append(logval)

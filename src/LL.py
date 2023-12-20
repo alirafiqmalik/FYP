@@ -1,7 +1,8 @@
 from src.netlist import *
 import subprocess
-from src.utils import sortio, randKey, gencc, hammingcc,format_verilog, io_port,gen_busport,extract_io_v,extract_gates_va
+from src.utils import sortio, randKey, gencc, hammingcc,format_verilog, io_port,gen_busport,extract_io_v,extract_gates_va,gate_to_assign
 from src.cmds import *
+import random
 
 ####################################################################################################################################
 ####################################################################################################################################
@@ -33,6 +34,7 @@ class LogicLocking(Netlist):
         super().__init__(netlist)
         self.keygates = {'XOR': 0, 'XNOR': 0}
         self.keygatescount = 0
+        
 
     def keynodes(self) -> dict:
         return self.keygates
@@ -64,6 +66,9 @@ class LogicLocking(Netlist):
 
         self.keygates[gatetype] += 1
         self.keygatescount += 1
+    
+
+    
 
     def RLL(self, n: int, key: int):
         bitkey = format(key, "b")
@@ -82,14 +87,24 @@ class LogicLocking(Netlist):
         print("######################################")
 
         random.seed(10)
-        for i in range(n):
+        i=-1
+        while(1):
+        # for i in range(n):
+            if(i==(n-1)):
+                break
+            else:
+                i+=1
             tp = random.randint(0, len(self.wires)-1)
             inp = list(self.circuitgraph.predecessors(self.wires[tp]))
             if (bitkey[-(i+1)] == '1'):
                 self.InsertKeyGate(inp[0], self.wires[tp], 'XNOR')
+            elif(len(inp)==0):
+                pass
             else:
                 self.InsertKeyGate(inp[0], self.wires[tp], 'XOR')
-        
+            # print("HERE  ",inp[0],i)
+            
+
     def SLL(self, n: int, key: int):
         bitkey = format(key, "b")
         print(2**n, "<----->", key, "<----->", (2**n) >= key)
@@ -111,9 +126,13 @@ class LogicLocking(Netlist):
             tp = random.randint(0, len(self.wires)-1)
             inp = list(self.circuitgraph.predecessors(self.wires[tp]))
             if (bitkey[-(i+1)] == '1'):
+                pass
                 self.InsertKeyGate(inp[0], self.wires[tp], 'XNOR')
             else:
                 self.InsertKeyGate(inp[0], self.wires[tp], 'XOR')
+
+
+
 
     def FindConeinputs(self, node):
         if node in self.inputs:
@@ -140,100 +159,107 @@ class LogicLocking(Netlist):
         return maxtmp, maxout
     
 
-    def graph_to_bench(self, outpath: str) -> None:
+    def graph_to_bench(self) -> str:
+        
         graphtonetlist = ""
         for i in self.inputs:
             graphtonetlist += "INPUT("+i+")"+"\n"
+            # graphtonetlist +="input {}\n".format(i)
 
         for i in self.outputs:
-            # print("OUPUT("+i+")")
             graphtonetlist += "OUTPUT("+i+")"+"\n"
+            # graphtonetlist +="output {}\n".format(i)
+        
+
         for i in self.gatenodes().keys():
             for j in range(self.gatenodes()[i]):
                 tmpj = i+"_"+str(j)
                 inp = list(self.circuitgraph.predecessors(tmpj))
                 out = list(self.circuitgraph.successors(tmpj))
+                
                 if (i == "NOT" or i == 'BUF'):
+                    # graphtonetlist += "assign {} = {}{};\n".format(out[0],"~" if i=="NOT" else "",inp[0])
                     graphtonetlist += out[0]+" = "+i+"("+inp[0]+")"+"\n"
                 else:
-                    graphtonetlist += out[0]+" = "+i + \
-                        "("+inp[0]+","+inp[1]+")"+"\n"
-        print("Writing BENCH File to Location: ", outpath)
-        with open(outpath, 'w') as f:
-            f.write(graphtonetlist)
+                    # graphtonetlist += "assign {o} = {neg}({i0}{op}{i1});".format(o=out[0],i0=inp[0],i1=inp[1],neg="~" if ((i[0]=="N") or i=="XNOR") else "",op=gate_to_assign[i])
+                    graphtonetlist += out[0]+" = "+i + "("+inp[0]+","+inp[1]+")"+"\n"
+        return graphtonetlist
 
 
-####################################################################################################################################
-####################################################################################################################################
-####################################################################################################################################
-####################################################################################################################################
 
-# from src.LL import PostSAT_LL
 
-# b=open("/home/alira/FYP/tmp.v").read()
-# LL=PostSAT_LL(b,mode="verilog")
-# lockcir=LL.SFLL()
 
-# with open("/home/alira/FYP/tmptop.v","w") as f:
-#   f.write(lockcir)
+# ####################################################################################################################################
+# ####################################################################################################################################
+# ####################################################################################################################################
+# ####################################################################################################################################
 
-class PostSAT_LL:
-  def __init__(self,netlist,mode):
-    if(mode=="verilog"):
-      #self.netlist=format_verilog(netlist,remove_wire=False)
-      self.netlist=netlist
-      self.inputs,self.ip=extract_io_v(self.netlist,mode="input")
-      # print(getio_v(self.netlist,mode="input"))
-      self.outputs,self.op=extract_io_v(self.netlist,mode="output")
-      self.gates,self.gate_count=extract_gates_va(self.netlist)
-    # elif(mode=="bench"):
-    #   self.netlist=format_bench(netlist)
-    #   self.inputs=extract_io_b(self.netlist,mode="input")
-    #   self.outputs=extract_io_b(self.netlist,mode="output")
-    #   self.gates,self.gate_count=extract_gates_b(self.netlist)
+# # from src.LL import PostSAT_LL
 
-  def getCRunits(self, key=None, HD=0):  # 734
-    # tmp,outnode=circuit.MaxInputCone()
-    tmp = self.inputs
-    sortio(tmp)
-    if (key == None):
-        key, tmpkey = randKey(len(tmp))
-    else:
-      tmpkey=format(key, "0"+str(len(tmp))+"b")
+# # b=open("/home/alira/FYP/tmp.v").read()
+# # LL=PostSAT_LL(b,mode="verilog")
+# # lockcir=LL.SFLL()
+
+# # with open("/home/alira/FYP/tmptop.v","w") as f:
+# #   f.write(lockcir)
+
+# class PostSAT_LL:
+#   def __init__(self,netlist,mode):
+#     if(mode=="verilog"):
+#       #self.netlist=format_verilog(netlist,remove_wire=False)
+#       self.netlist=netlist
+#       self.inputs,self.ip=extract_io_v(self.netlist,mode="input")
+#       # print(getio_v(self.netlist,mode="input"))
+#       self.outputs,self.op=extract_io_v(self.netlist,mode="output")
+#       self.gates,self.gate_count=extract_gates_va(self.netlist)
+#     # elif(mode=="bench"):
+#     #   self.netlist=format_bench(netlist)
+#     #   self.inputs=extract_io_b(self.netlist,mode="input")
+#     #   self.outputs=extract_io_b(self.netlist,mode="output")
+#     #   self.gates,self.gate_count=extract_gates_b(self.netlist)
+
+#   def getCRunits(self, key=None, HD=0):  # 734
+#     # tmp,outnode=circuit.MaxInputCone()
+#     tmp = self.inputs
+#     sortio(tmp)
+#     if (key == None):
+#         key, tmpkey = randKey(len(tmp))
+#     else:
+#       tmpkey=format(key, "0"+str(len(tmp))+"b")
     
-    print(len(tmp), " ===>> ", len(tmpkey)," ===>> ", 2**len(tmpkey),
-              ">", key, " ===>> ", tmpkey, "\n")
+#     print(len(tmp), " ===>> ", len(tmpkey)," ===>> ", 2**len(tmpkey),
+#               ">", key, " ===>> ", tmpkey, "\n")
     
-    # cc= hammingcc("corrupt",tmp,HD,key)
-    # rsc=hammingcc("restore",tmp,HD,None)
-    cc = gencc("corrupt", tmp, key)
-    rsc = gencc("restore", tmp, None)
-    return cc, rsc
+#     # cc= hammingcc("corrupt",tmp,HD,key)
+#     # rsc=hammingcc("restore",tmp,HD,None)
+#     cc = gencc("corrupt", tmp, key)
+#     rsc = gencc("restore", tmp, None)
+#     return cc, rsc
   
-  def SFLL(self):
-    (corrupt,_,pc),(restore,_,rc)=self.getCRunits(key=102)
+#   def SFLL(self):
+#     (corrupt,_,pc),(restore,_,rc)=self.getCRunits(key=102)
 
-    keyport=gen_busport("keyinput",len(self.inputs))
+#     keyport=gen_busport("keyinput",len(self.inputs))
 
-    iportnodes, inputnodes,_ = io_port(self.inputs)
-    oportnodes, outputnodes,_ = io_port(self.outputs,mode="output")
+#     iportnodes, inputnodes,_ = io_port(self.inputs)
+#     oportnodes, outputnodes,_ = io_port(self.outputs,mode="output")
 
-    tmporgport=""
-    tmpx=""
-    for i in self.outputs:
-      tmpx+="assign {} = {} ^ FSR ^ FSO;\n".format(i,i+"org")
-      tmporgport+=".{}({}),".format(i,i+"org")
+#     tmporgport=""
+#     tmpx=""
+#     for i in self.outputs:
+#       tmpx+="assign {} = {} ^ FSR ^ FSO;\n".format(i,i+"org")
+#       tmporgport+=".{}({}),".format(i,i+"org")
 
-    for i in self.inputs:
-      tmporgport+=".{}({}),".format(i,i+"org")
+#     for i in self.inputs:
+#       tmporgport+=".{}({}),".format(i,i+"org")
 
-    tmporgport=tmporgport[:-1]
+#     tmporgport=tmporgport[:-1]
 
-    self.netlist=re.sub("module .* ?\((.*)\);",r"module org (\1);",self.netlist)
+#     self.netlist=re.sub("module .* ?\((.*)\);",r"module org (\1);",self.netlist)
 
-    top="module top({topbus});\n{topio}\n{CRwire}\n{orgmodule}\n{CRmodule}\n{Xornet}\nendmodule"
-    top=top.format(topbus=iportnodes+","+oportnodes+","+keyport,topio="input {};\n{}\n{}".format(keyport,inputnodes,outputnodes),CRwire="",orgmodule="org o1({});".format(tmporgport),CRmodule=pc.format(init="to",Q="FSO")+"\n"+rc.format(init="ro",key="{%s}"%keyport,Q="FRO"),Xornet=tmpx)
+#     top="module top({topbus});\n{topio}\n{CRwire}\n{orgmodule}\n{CRmodule}\n{Xornet}\nendmodule"
+#     top=top.format(topbus=iportnodes+","+oportnodes+","+keyport,topio="input {};\n{}\n{}".format(keyport,inputnodes,outputnodes),CRwire="",orgmodule="org o1({});".format(tmporgport),CRmodule=pc.format(init="to",Q="FSO")+"\n"+rc.format(init="ro",key="{%s}"%keyport,Q="FRO"),Xornet=tmpx)
 
-    return top+"\n\n{}\n\n{}\n\n{}".format(corrupt,restore,self.netlist)
+#     return top+"\n\n{}\n\n{}\n\n{}".format(corrupt,restore,self.netlist)
 
     

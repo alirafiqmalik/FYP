@@ -1,5 +1,8 @@
+import os
 import re
 import random
+import subprocess
+
 
 #gates=['INVX1', 'AND2X1', 'OR2X1', 'NAND2X1', 'NOR2X1']
 #gates=['not_g', 'and_g', 'or_g', 'nand_g', 'nor_g']
@@ -7,9 +10,7 @@ import random
 v_gates_ps="_g"
 verilog_gates=['BUF_g','NOT_g', 'AND_g', 'OR_g', 'NAND_g', 'NOR_g','XOR_g','XNOR_g']
 bench_gates=['DFF','BUF','NOT', 'AND', 'OR', 'NAND', 'NOR','XOR','XNOR']
-
-
-
+gate_to_assign={'BUF':'','NOT':'~', 'AND':'&', 'OR':'|','XOR':'^','NAND':'&', 'NOR':'|','XNOR':'^'}
 
 ####################################################################################################################################
 ####################################################################################################################################
@@ -45,6 +46,12 @@ def get_diference(a,b):
     tmpa=list(set(a) - set(b))
     tmpb=list(set(b) - set(a))
     tmplist=[tmpa,tmpb]#list(set(tmpa)|set(tmpb))
+    return tmplist
+
+def get_diference_abs(a,b):
+    tmpa=list(set(a) - set(b))
+    tmpb=list(set(b) - set(a))
+    tmplist=list(set(tmpa)|set(tmpb))
     return tmplist
 
 ####################################################################################################################################
@@ -113,10 +120,10 @@ def io_port(inputs, mode="input"):
 
 
 def sortio(tmp, reverse=True):
-    tmpl = list(set([re.sub("\[[0-9]+\]", "", i) for i in tmp]))
+    tmpl = list(set([re.sub(r"\[[0-9]+\]", "", i) for i in tmp]))
     tmpl.sort(reverse=False)
     def x(inp): return (tmpl.index(
-        re.sub("(\[[0-9]+\])", "", inp)), re.sub(".*\[?([0-9]+)\]?.*", r"\1", inp))
+        re.sub(r"(\[[0-9]+\])", "", inp)), re.sub(r".*\[?([0-9]+)\]?.*", r"\1", inp))
     tmp.sort(key=x, reverse=reverse)
 
 ####################################################################################################################################
@@ -138,14 +145,33 @@ def randKey(bits, seed=None):
     tmpkey = format(intkey, "0"+str(bits)+"b")
     return intkey, tmpkey
 
+
+
+####################################################################################################################################
+####################################################################################################################################
+
+# "module {name} (inputs, keys, lock_output); parameter n={ic};input [n-1:0] inputs;input [n-1:0] keys;output lock_output;reg key = {ic}'d{key}; assign lock_output = (ckt_output ^ ((inputs == keys) & (inputs != key))); endmodule"
+
+def gencc_SarLock(modulename, inputs,key):
+    codestr="module {name} (inputs, keys, lock_output); parameter n={ic};input [n-1:0] inputs;input [n-1:0] keys;output lock_output;reg key = {ic}'d{key}; assign lock_output = (((inputs == keys) & (inputs != key))); endmodule"
+    ic = len(inputs)
+    portnodes, _,_ = io_port(inputs)
+    
+    comver = codestr.format(name=modulename,ic=ic,key=key)
+    port=modulename+" {init} ("+"{portnodes},"+"{KEY}"+",{Q}); "
+
+    return re.sub(";", ";\n", comver), portnodes,port
+
+
+
 ####################################################################################################################################
 ####################################################################################################################################
 
 
-"module antisat_{name} (A,B,Q);parameter keyval = {key},n={ic}; input [n-1:0] A; input [2n-1:0] B; output Q;always @ (A or B) begin  if (B == keyval) begin    Q = 1;  end else begin    Q = 0;end end endmodule"
-"module antisat_{name} (A,KEY,Q);parameter n={ic}; input [n-1:0] A; input [2n-1:0] B; output Q;always @ (A or B) begin  if (B == {keyval}) begin    Q = 1;  end else begin    Q = 0;end end endmodule"
+# "module antisat_{name} (A,B,Q);parameter keyval = {key},n={ic}; input [n-1:0] A; input [2n-1:0] B; output Q;always @ (A or B) begin  if (B == keyval) begin    Q = 1;  end else begin    Q = 0;end end endmodule"
+# "module antisat_{name} (A,KEY,Q);parameter n={ic}; input [n-1:0] A; input [2n-1:0] B; output Q;always @ (A or B) begin  if (B == {keyval}) begin    Q = 1;  end else begin    Q = 0;end end endmodule"
 
-"module antisat_{name} (A,KEY,Q);parameter n={ic};input [n-1:0] A; input [2n-1:0] KEY; output Q; wire Q1,Q2; g_block g(A,KEY[n-1:0],Q1); g_block gc(A,KEY[2n-1:n],Q2); assign Q = Q1 & Q2;endmodule \nmodule g_block(X,KEY_X,Q);parameter n={ic};input [n-1:0]X;input [n-1:0]KEY_X;output reg Q;wire [n-1:0]X_xor;assign X_xor=X^KEY_X;integer k;always@(*)begin Q=1;for(k=0;k<n-1;k=k+1)begin if(X_xor[k]==0) Q=0;end end endmodule"
+# "module antisat_{name} (A,KEY,Q);parameter n={ic};input [n-1:0] A; input [2n-1:0] KEY; output Q; wire Q1,Q2; g_block g(A,KEY[n-1:0],Q1); g_block gc(A,KEY[2n-1:n],Q2); assign Q = Q1 & Q2;endmodule \nmodule g_block(X,KEY_X,Q);parameter n={ic};input [n-1:0]X;input [n-1:0]KEY_X;output reg Q;wire [n-1:0]X_xor;assign X_xor=X^KEY_X;integer k;always@(*)begin Q=1;for(k=0;k<n-1;k=k+1)begin if(X_xor[k]==0) Q=0;end end endmodule"
 
 def gencc_AntiSAT(modulename, inputs):
     codestr="module {name} (A,KEY,Q);parameter n={ic};input [n-1:0] A; input [2*n-1:0] KEY; output Q; wire Q1,Q2; g_block g(A,KEY[n-1:0],Q1); g_block gc(A,KEY[2*n-1:n],Q2); assign Q = Q1 & (~Q2);endmodule \n\nmodule g_block(X,KEY_X,Q);parameter n={ic};input [n-1:0]X;input [n-1:0]KEY_X;output reg Q;wire [n-1:0]X_xor;assign X_xor=X^KEY_X;integer k;always@(*)begin Q=1;for(k=0;k<n-1;k=k+1)begin if(X_xor[k]==0) Q=0;end end endmodule"
@@ -205,21 +231,43 @@ def hammingcc(modulename, inputs, h, key=None):
 ####################################################################################################################################
 
 
-def format_verilog(netlist,remove_wire=False):
-  netlist=re.sub("//.*\n","",netlist)
-  netlist=re.sub("[/][*].*[*][/]","",netlist)
-  netlist=re.sub("[(][*].*[*][)]\n","",netlist)
+def format_verilog(verilog,remove_wire=False):
+    verilog=re.sub("//.*\n","",verilog)
+    verilog=re.sub("[/][*].*[*][/]","",verilog)
+    verilog=re.sub("[(][*].*[*][)]\n","",verilog)
 
-  if(remove_wire):
-    netlist=re.sub("wire .*;\n","",netlist)
+    if(remove_wire):
+        verilog=re.sub("wire .*;\n","",verilog)
 
-  netlist=re.sub("\n+","",netlist)
-  netlist=re.sub("\s+"," ",netlist)
-  netlist=re.sub(" ?; ?",";\n",netlist)
-  netlist=re.sub("endmodule","endmodule\n",netlist)
-  netlist=re.sub("end ","end\n",netlist)
-  netlist=re.sub("begin","begin\n",netlist)
-  return netlist
+    verilog=re.sub("\n+","",verilog)
+    verilog=re.sub(r"\s+"," ",verilog)
+    verilog=re.sub(" ?; ?",";\n",verilog)
+    verilog=re.sub("endmodule","endmodule\n",verilog)
+    verilog=re.sub("end ","end\n",verilog)
+    verilog=re.sub("begin","begin\n",verilog)
+
+    assign_nodes=re.findall(r"assign (\\?.*) = (\\?.*) ?;\n",verilog)
+    # for i in assign_nodes:
+    #     if(i[0]=="N241_O"):
+    #         print(i)
+
+    verilog=re.sub(r"assign (\\?.*) = (\\?.*) ?;\n","",verilog) #BUF_g _node_\1_ ( .A(\2), .Y(\1) );\n
+
+    # print(re.findall("N241_O",verilog))
+    # print(re.findall("N241_I",verilog))
+    tmpstr=""
+    count=0
+    for i in assign_nodes:
+        if(re.findall(i[0],verilog)!=[]):
+            if("1'h" in i[1]):
+                print(i,re.findall(i[0],verilog))
+                raise Exception("\n\n\n\t   GONNA HAVE TO FIX THIS NOW!!!!!!!!!! \n\n =====>>> Binary value on left Side of assign <<<=====")
+            else:
+                tmpstr+="BUF_g _assignbuffer_{} ( .A({}), .Y({}) );\n".format(count,i[1],i[0])
+                count+=1
+
+    verilog=re.sub("endmodule",tmpstr+"endmodule",verilog)
+    return verilog
 
 ####################################################################################################################################
 ####################################################################################################################################
@@ -234,7 +282,7 @@ def format_bench(netlist):
   netlist=re.sub("="," = ",netlist)
   netlist=re.sub("\n+","",netlist)
   netlist=re.sub("\s+"," ",netlist)
-  netlist=re.sub("\)",")\n",netlist)
+  netlist=re.sub(r"\)",")\n",netlist)
 
   return netlist
 
@@ -243,7 +291,7 @@ def format_bench(netlist):
 ####################################################################################################################################
 
 def extract_io_b(bench,mode="input"):
-    tmp=re.findall(mode.upper()+"\((.*)\)",bench)
+    tmp=re.findall(mode.upper()+r"\((.*)\)",bench)
     sortio(tmp)
     return tmp
 
@@ -259,11 +307,11 @@ def extract_gates_b(bench):
             ix=i
 
         if i=='NOT' or i=='BUF' or i=='DFF':
-            tmp[i]=re.findall(" ?(.*) = "+ ix +"\((.*)\)\n?",bench)
+            tmp[i]=re.findall(r" ?(.*) = "+ ix +r"\((.*)\)\n?",bench)
 
             i.lower()
         else:
-            tmp[i]=re.findall(" ?(.*) = "+ ix +"\((.*), ?(.*)\)\n?",bench)
+            tmp[i]=re.findall(r" ?(.*) = "+ ix +r"\((.*), ?(.*)\)\n?",bench)
         
         gcount = len(tmp[i])
         if (gcount == 0):
@@ -376,7 +424,6 @@ def extract_io_v(verilog,mode="input"):
     elif("," in i):
         tmpi=i.split(",")
         nodes=merge_lists((nodes,tmpi))
-
     else:
       nodes.append(i)
       port+=i+","
@@ -386,27 +433,100 @@ def extract_io_v(verilog,mode="input"):
 ####################################################################################################################################
 
 def extract_gates_v(verilog):
-  tmp={}
-  gate_count = {}
-#   tmp[re.sub("_g","",verilog_gates[0])]=re.findall(" "+verilog_gates[0] +" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
-#   gate_count[verilog_gates[0]] = len(tmp[re.sub("_g","",verilog_gates[0])])
-#   tmp[re.sub("_g","",verilog_gates[1])]=re.findall(" "+verilog_gates[1] +" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
-#   gate_count[verilog_gates[1]] = len(tmp[re.sub("_g","",verilog_gates[1])])
+    tmp={}
+    gate_count = {}
+    #   tmp[re.sub("_g","",verilog_gates[0])]=re.findall(" "+verilog_gates[0] +" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
+    #   gate_count[verilog_gates[0]] = len(tmp[re.sub("_g","",verilog_gates[0])])
+    #   tmp[re.sub("_g","",verilog_gates[1])]=re.findall(" "+verilog_gates[1] +" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
+    #   gate_count[verilog_gates[1]] = len(tmp[re.sub("_g","",verilog_gates[1])])
 
-  for i in verilog_gates:
-    if(i=="NOT_g"):
-        tmpx=re.findall(" ?"+verilog_gates[1] + r" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
-    elif(i=="BUF_g"):
-        tmpx=re.findall(" ?"+verilog_gates[0] +r" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
-    else:
-        tmpx=re.findall(" ?"+i +r" .* \( .A\((.*)\), .B\((.*)\), .Y\((.*)\) \) ?;",verilog)
+    for i in verilog_gates:
+        if(i=="NOT_g" or i=="BUF_g"):
+            tmpx=re.findall(r"\n ?"+i + r" .* \( .A\((.*)\), .Y\((.*)\) \) ?;",verilog)
+        else:
+            tmpx=re.findall(r"\n ?"+i +r" .* \( .A\((.*)\), .B\((.*)\), .Y\((.*)\) \) ?;",verilog)
 
-    if(tmpx!=[]):    
         tmpi=re.sub("_g","",i)
         tmp[tmpi]=tmpx
         gate_count[i] = len(tmp[tmpi])
+            
+    return tmp,gate_count
+
+
+
+
+
+
+
+
+####################################################################################################################################
+####################################################################################################################################
+##AST help functions
+
+# def extract_module_name(verilog):
+#     # Regular expression to match the module name
+#     module_pattern = re.compile(r"module\s+(\w+)")
+
+#     # Search for the module name in the Verilog code
+#     module_match = module_pattern.search(verilog)
+
+#     if module_match:
+#         module_name = module_match.group(1)
+#     return None
+
+# def synthesize_verilog(verilog):
+#     text_file = open("tmp_syn1.v", "w")
+#     n = text_file.write(verilog)
+#     text_file.close()
     
-  return tmp,gate_count
+#     cmd = """
+#         ~/FYP/linux/yosys/build/yosys -q -p'
+#         read_verilog tmp_syn1.v
+#         hierarchy -check -top {}
+#         proc; opt; fsm; opt; memory; opt;
+#         techmap; opt
+#         flatten
+#         clean
+#         write_verilog -noattr /home/alira/Z_FYP_FINAL/tmp_syn2.v
+#         '
+#     """
+#     # Run the command and capture the output
+#     module_name = extract_module_name(verilog)
+#     result = subprocess.run(cmd.format(module_name), shell=True, capture_output=True)
+#     text_file = open("tmp_syn2.v", "r")
+#     synthesized_verilog = text_file.read()
+#     text_file.close()
+#     os.remove("tmp_syn1.v")
+#     os.remove("tmp_syn2.v")
+
+#     return synthesized_verilog
+
+# def synthesize_bench(bench):
+#     text_file = open("tmp_syn1.bench", "w")
+#     text_file.write(bench)
+#     text_file.close()
+    
+#     cmd = """
+#         ~/FYP/linux/yosys/build/yosys-abc'
+#         read_bench tmp_syn1.bench
+#         write_bench -l tmp_syn2.bench
+#         '
+#     """
+#     # Run the command and capture the output
+#     result = subprocess.run(cmd, shell=True, capture_output=True)
+#     text_file = open("tmp_syn2.bench", "r")
+#     synthesized_verilog = text_file.read()
+#     text_file.close()
+#     os.remove("tmp_syn1.v")
+#     os.remove("tmp_syn2.v")
+
+#     return synthesized_verilog
+
+
+
+
+
+
 
 
 ####################################################################################################################################

@@ -1,27 +1,135 @@
+import src.verification as verification
 import src.utils as utils
 import src.conv as conv
+import networkx as nx
 import src.LL as LL
+import subprocess
 import os
+import re
 
-orgdir="/home/alira/FYP/Benchmarks/ISCAS85/"
+cmds="""
+./linux/yosys/build/yosys -q -p'
+read_verilog {} 
+hierarchy -check -top {}
+proc; opt; fsm; opt; memory; opt;
+techmap; opt
+flatten
+dfflibmap -liberty ./vlib/mycells.lib
+abc -liberty ./vlib/mycells.lib
+clean
+write_verilog -noattr {}
+'
+"""
+
+
+
+orgdir="./Benchmarks/ISCAS85/"
 for files in os.listdir(orgdir):
   orgpath=orgdir+"{orgname}/{orgname}.v".format(orgname=files)
-  print(orgpath)
+  # print(orgpath,files)
 
-  netlist=open(orgpath).read()
-  tmpLL=LL.LogicLocking(netlist)
+  file_path="./tmpveriog.v"
+  netlist=open(file_path).read()
+  # print(netlist)
 
-  tmpLL.RLL(2,2)
+  subprocess.run(cmds.format(file_path,re.findall("module (.*)\(",netlist)[0],"./tmp2.v"),shell=True)
+
+  print("READING DONE")
 
 
+  verilog=open("./tmp2.v").read()
+  verilog=utils.format_verilog(verilog,remove_wire=True)
+
+  with open("./tmp2.v", 'w') as f:
+      f.write(verilog)
+
+  # assign_nodes=re.findall("assign (\\?.*) = (.*) ?;\n",verilog)
+  # verilog=re.sub("assign (.*) = (.*) ?;\n","",verilog) #BUF_g _node_\1_ ( .A(\2), .Y(\1) );\n
+  # print(assign_nodes)
+  # for i in assign_nodes:
+  #   if(re.findall(i[0],verilog)!=[]):
+  #     print(i,re.findall(i[0],verilog))
+  #   else:
+  #     print(i,re.findall(i[0],verilog))
+
+  # with open("./tmp2.v", 'w') as f:
+  #   f.write(verilog)
 
 
+  # verilog=re.sub("assign (.*) = (.*) ?;\n",r"BUF_g _node_\1_ ( .A(\2), .Y(\1) );\n",verilog)
+  
+  
+  # bench=conv.verilog_to_bench(verilog)
 
+  # # with open("./tmp2.v", 'w') as f:
+  # #   f.write(bench)
 
+  # # with open("./tmp2.v","w") as f:
+  # #   f.write(verilog)
+
+  # tmpLL=LL.LogicLocking(bench)
+
+  # # tmpLL.nodeio("j")
+  
+  # # tmpLL.nodeio("NAND_1")
+  
 
 
 
   break
+
+  # intkey, tmpkey=utils.randKey(128)
+  # tmpLL.RLL(128,intkey)
+
+  # netlistLL=tmpLL.graph_to_bench()
+
+  # outpath="./tmp2LL.bench"
+  # print("Writing BENCH File to Location: ", outpath)
+  # with open(outpath, 'w') as f:
+  #     f.write(netlistLL)
+  
+  # verilogLL,_=conv.bench_to_verilog(netlistLL,modulename="enccir")
+  
+  
+  
+  
+  # outpath="./tmp2LL.v"
+  # print("Writing BENCH File to Location: ", outpath)
+  # with open(outpath, 'w') as f:
+  #     f.write(verilogLL)
+
+  
+
+
+  
+  # miter_circuit,miter_testbench=verification.gen_miterCircuit(verilog,verilogLL)
+
+  # with open("top.v","w") as f:
+  #   f.write(miter_circuit)
+  # with open("testbench.v","w") as f:
+  #   f.write(miter_testbench)
+
+  
+  # # subprocess.run(cmds.format("tmpveriog.v",re.findall("module (.*)\(",netlist)[0],"./tmpxx.v"),shell=True)
+  # # verilog=open("./tmpxx.v").read()
+  # # verilog=utils.format_verilog(verilog,remove_wire=True)
+
+  # # with open("/home/alira/FYP/tmpxx.v", 'w') as f:
+  # #     f.write(verilog)
+  
+  # break
+
+
+#####################################################################################################################################
+#####################################################################################################################################
+#####################################################################################################################################
+#####################################################################################################################################
+#####################################################################################################################################
+#####################################################################################################################################
+#####################################################################################################################################
+#####################################################################################################################################
+
+
 
 
 # LL.LogicLocking()
@@ -32,10 +140,10 @@ for files in os.listdir(orgdir):
 
 # print(utils.gencc_AntiSAT("top", ["a","b","c"]))
 
-# tmp1=open("/home/alira/FYP/linux/neos/bench/tmpout.bench").read()
+# tmp1=open("./linux/neos/bench/tmpout.bench").read()
 # tmp1,_=conv.bench_to_verilog(tmp1)
 
-# tmp2=open("/home/alira/FYP/linux/neos/bench/tmpin.bench").read()
+# tmp2=open("./linux/neos/bench/tmpin.bench").read()
 # tmp2,_=conv.bench_to_verilog(tmp2)
 
 # with open("./tmp.v","w") as f:
@@ -139,9 +247,9 @@ for files in os.listdir(orgdir):
 
 
 
-# # "/home/alira/FYP/linux/assign_tech.v"
-# # "/home/alira/FYP/tmporg.v"
-# verilog=open("/home/alira/FYP/tmp2.v").read()
+# # "./linux/assign_tech.v"
+# # "./tmporg.v"
+# verilog=open("./tmp2.v").read()
 # # verilog=utils.format_verilog(verilog)
 
 

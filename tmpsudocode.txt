@@ -1,0 +1,50 @@
+Input: Original design (C), key-size (K)
+Output: Locked design (Clock), secret key (Key)
+
+procedure Locking(C,K,split,InvList,NonInvList):
+  for k in {0,split − 1} do
+    gate ← choose_rand_gate(InvList)
+    InvList ← InvList - {gate}
+    if (RANDOM % 2) then
+    replace_gate(gate,{XNOR},C)
+    Key[k] ← 0
+    else
+    replace_gate(gate,{XOR},C)
+    Key[k] ← 1
+    end
+
+  for k in {split,K − 1} do
+    gate ← choose_rand_gate(N onInvList)
+    N onInvList ← N onInvList - {gate}
+    if (RANDOM % 2) then
+    insert_gate(gate,{XNOR},C)
+    Key[k] ← 1
+    else
+    insert_gate(gate,{XOR},C)
+    Key[k] ← 0
+    end
+
+  return Key, C
+
+
+procedure ProduceInverters(c,gates,S):
+  for s in {0,S − 1} do
+    gate ← choose_rand_gate(gates)
+    replace_gate(gate,{gate,INV },c)
+
+
+function TRLL+:
+  split ← RANDOM % K
+  AllGates ← all_gates(C)
+  InvList ← get_inverters(AllGates)
+  N onInvList ← get_noninverters(AllGates)
+  num_inv ← num(InvList)
+  if num_inv < split then
+    ProduceInverters(C,N onInvList,split-num_inv)
+  
+  AllGates ← all_gates(C)
+  InvList ← get_inverters(AllGates)
+  N onInvList ← get_noninverters(AllGates)
+  {Key, Clock} ←
+  Locking(C,K,split,InvList,N onInvList)
+  return Key, Clock

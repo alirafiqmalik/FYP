@@ -55,6 +55,7 @@ class SatAttack:
             self.iterations += 1
 
         key = self._find_key(oracle_io_pairs, key_inputs)
+        self.key=key
         # print(key)
         # expected_key = benchmarks.get_expected_key(self.locked_filename)
 
